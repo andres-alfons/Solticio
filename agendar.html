@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendar Cita | Valentina Niebles</title>
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-logo">VALENTINA NIEBLES</a>
+    <ul class="nav-links">
+      <li><a href="index.html"><i class="bi bi-house-door"></i> Inicio</a></li>
+      <li><a href="coleccion.html"><i class="bi bi-grid"></i> Colección</a></li>
+      <li><a href="disenos.html"><i class="bi bi-scissors"></i> Diseños a Medida</a></li>
+      <li><a href="agendar.html"><i class="bi bi-calendar-heart"></i> Agendar Cita</a></li>
+      <li><a href="nosotros.html"><i class="bi bi-person-heart"></i> Nosotros</a></li>
+      <li><a href="contacto.html"><i class="bi bi-chat-dots"></i> Contacto</a></li>
+    </ul>
+    <div class="nav-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<section class="page-header">
+  <div class="container">
+    <h1>Agendar Cita</h1>
+    <p class="breadcrumb"><a href="index.html">Inicio</a> &nbsp;/&nbsp; Agendar Cita</p>
+  </div>
+</section>
+
+<section class="appointment-section">
+  <div class="container">
+    <div class="appointment-grid">
+      <div class="appointment-info fade-in-left">
+        <h3>Tu Cita Personalizada</h3>
+        <p style="color:rgba(255,255,255,0.8);margin-bottom:1.5rem;">En Valentina Niebles cada cita es una experiencia única. Dedicamos tiempo exclusivo para entender tus gustos, necesidades y hacer realidad la prenda de tus sueños.</p>
+        <ul>
+          <li>Asesoría personalizada de estilo y silueta</li>
+          <li>Selección de telas y materiales premium</li>
+          <li>Prueba de ajuste y modificaciones</li>
+          <li>Seguimiento continuo hasta la entrega</li>
+          <li>Consulta virtual o presencial disponible</li>
+        </ul>
+        <a href="https://wa.me/573245947260" target="_blank" class="btn btn-gold" style="width:100%;"><i class="bi bi-whatsapp"></i> Consultar por WhatsApp</a>
+      </div>
+
+      <div class="form-container fade-in-right" style="margin-top:0;">
+        <form id="appointmentForm" onsubmit="handleAppointmentSubmit(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nombre">Nombre Completo</label>
+              <input type="text" id="nombre" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" placeholder="+57 300 000 0000" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" id="email" placeholder="tu@correo.com" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tipo">Tipo de Cita</label>
+              <select id="tipo" required>
+                <option value="">Selecciona una opción</option>
+                <option value="presencial">Presencial</option>
+                <option value="virtual">Virtual</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="servicio">Servicio</label>
+              <select id="servicio" required>
+                <option value="">Selecciona una opción</option>
+                <option value="asesoria">Asesoría de Estilo</option>
+                <option value="diseno">Diseño a Medida</option>
+                <option value="prueba">Prueba de Ajuste</option>
+                <option value="consulta">Consulta General</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fecha">Fecha Preferida</label>
+              <input type="date" id="fecha" required>
+            </div>
+            <div class="form-group">
+              <label for="hora">Hora Preferida</label>
+              <select id="hora" required>
+                <option value="">Selecciona un horario</option>
+                <option value="mañana">Mañana (9:00 AM - 12:00 PM)</option>
+                <option value="tarde">Tarde (2:00 PM - 5:00 PM)</option>
+                <option value="noche">Noche (6:00 PM - 8:00 PM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mensaje">Mensaje o Detalles Adicionales</label>
+            <textarea id="mensaje" rows="3" placeholder="Cuéntanos qué te gustaría tratar en la cita..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%;"><i class="bi bi-calendar-check"></i> Agendar Cita</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section" style="background:var(--cream);">
+  <div class="container">
+    <p class="section-subtitle">Horarios</p>
+    <h2 class="section-title">Disponibilidad</h2>
+    <div class="section-divider"></div>
+
+    <div class="stats-grid" style="margin-top:2rem;">
+      <div class="stat-item fade-in" style="background:var(--white);padding:2rem;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);">
+        <i class="bi bi-briefcase" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:0.5rem;"></i>
+        <p style="font-family:'Montserrat',sans-serif;font-weight:600;color:var(--burgundy);">Lunes - Viernes</p>
+        <p style="font-size:1.3rem;color:var(--gold);font-family:'Cormorant Garamond',serif;margin:0.5rem 0;">9:00 AM - 7:00 PM</p>
+        <p style="font-size:0.8rem;color:var(--text-light);">Citas programadas</p>
+      </div>
+      <div class="stat-item fade-in" style="background:var(--white);padding:2rem;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);">
+        <i class="bi bi-calendar-heart" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:0.5rem;"></i>
+        <p style="font-family:'Montserrat',sans-serif;font-weight:600;color:var(--burgundy);">Sábados</p>
+        <p style="font-size:1.3rem;color:var(--gold);font-family:'Cormorant Garamond',serif;margin:0.5rem 0;">9:00 AM - 2:00 PM</p>
+        <p style="font-size:0.8rem;color:var(--text-light);">Citas especiales</p>
+      </div>
+      <div class="stat-item fade-in" style="background:var(--white);padding:2rem;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);">
+        <i class="bi bi-cup-hot" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:0.5rem;"></i>
+        <p style="font-family:'Montserrat',sans-serif;font-weight:600;color:var(--burgundy);">Domingos</p>
+        <p style="font-size:1.3rem;color:var(--gold);font-family:'Cormorant Garamond',serif;margin:0.5rem 0;">Descanso</p>
+        <p style="font-size:0.8rem;color:var(--text-light);">Día de inspiración</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>Valentina Niebles</h3>
+        <p>Diseño de modas de alta costura. Elegancia, exclusividad y pasión en cada creación.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Explorar</h4>
+        <ul>
+          <li><a href="coleccion.html">Colección</a></li>
+          <li><a href="disenos.html">Diseños a Medida</a></li>
+          <li><a href="agendar.html">Agendar Cita</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="https://wa.me/573245947260"><i class="bi bi-whatsapp"></i> WhatsApp</a></li>
+          <li><a href="mailto:valentina@niebles.com"><i class="bi bi-envelope"></i> Email</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Valentina Niebles. Todos los derechos reservados. Hecho con amor.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+function handleAppointmentSubmit(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('nombre').value;
+  const tipo = document.getElementById('tipo').value;
+  const servicio = document.getElementById('servicio').value;
+  const fecha = document.getElementById('fecha').value;
+  const hora = document.getElementById('hora').value;
+  const msg = `Hola Valentina, soy ${nombre}. Quisiera agendar una cita:\n- Tipo: ${tipo}\n- Servicio: ${servicio}\n- Fecha: ${fecha}\n- Hora: ${hora}`;
+  window.open(`https://wa.me/573245947260?text=${encodeURIComponent(msg)}`, '_blank');
+}
+</script>
+<script src="js/main.js"></script>
+</body>
+</html>
