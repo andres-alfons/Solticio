@@ -18,9 +18,18 @@
       <li><a href="coleccion.html"><i class="bi bi-grid"></i> Colección</a></li>
       <li><a href="disenos.html"><i class="bi bi-scissors"></i> Diseños a Medida</a></li>
       <li><a href="agendar.html"><i class="bi bi-calendar-heart"></i> Agendar Cita</a></li>
+      <li><a href="pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a></li>
       <li><a href="nosotros.html"><i class="bi bi-person-heart"></i> Nosotros</a></li>
       <li><a href="contacto.html"><i class="bi bi-chat-dots"></i> Contacto</a></li>
     </ul>
+    <div class="nav-login">
+      <button class="login-btn" id="googleLoginBtn"><i class="bi bi-google"></i> Ingresar</button>
+      <div class="login-user" id="userDisplay">
+        <img class="login-avatar" src="" alt="Avatar">
+        <span class="login-name"></span>
+        <button class="logout-btn" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </div>
+    </div>
     <div class="nav-toggle">
       <span></span>
       <span></span>
@@ -185,6 +194,7 @@
           <li><a href="coleccion.html">Colección</a></li>
           <li><a href="disenos.html">Diseños a Medida</a></li>
           <li><a href="agendar.html">Agendar Cita</a></li>
+          <li><a href="pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a></li>
         </ul>
       </div>
       <div class="footer-links">
@@ -192,6 +202,7 @@
         <ul>
           <li><a href="nosotros.html">Nosotros</a></li>
           <li><a href="contacto.html">Contacto</a></li>
+          <li><a href="pedidos.html">Mis Pedidos</a></li>
         </ul>
       </div>
       <div class="footer-links">
@@ -219,6 +230,7 @@ function handleDesignSubmit(e) {
   window.open(`https://wa.me/573245947260?text=${encodeURIComponent(msg)}`, '_blank');
 }
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/main.js"></script>
 </body>
 </html>

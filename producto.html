@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Producto | Valentina Niebles</title>
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-logo">VALENTINA NIEBLES</a>
+    <ul class="nav-links">
+      <li><a href="index.html"><i class="bi bi-house-door"></i> Inicio</a></li>
+      <li><a href="coleccion.html"><i class="bi bi-grid"></i> Colección</a></li>
+      <li><a href="disenos.html"><i class="bi bi-scissors"></i> Diseños a Medida</a></li>
+      <li><a href="agendar.html"><i class="bi bi-calendar-heart"></i> Agendar Cita</a></li>
+      <li><a href="pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a></li>
+      <li><a href="nosotros.html"><i class="bi bi-person-heart"></i> Nosotros</a></li>
+      <li><a href="contacto.html"><i class="bi bi-chat-dots"></i> Contacto</a></li>
+    </ul>
+    <div class="nav-login">
+      <button class="login-btn" id="googleLoginBtn"><i class="bi bi-google"></i> Ingresar</button>
+      <div class="login-user" id="userDisplay">
+        <img class="login-avatar" src="" alt="Avatar">
+        <span class="login-name"></span>
+        <button class="logout-btn" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </div>
+    </div>
+    <div class="nav-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<section id="productDetail" class="product-section">
+  <div class="container" style="text-align:center;padding:8rem 0;">
+    <i class="bi bi-hourglass-split" style="font-size:3rem;color:var(--banana);display:block;margin-bottom:1rem;"></i>
+    <p style="color:var(--text-light);">Cargando producto...</p>
+  </div>
+</section>
+
+<section class="collection-section" style="padding-top:0;">
+  <div class="container">
+    <p class="section-subtitle">También te puede gustar</p>
+    <h2 class="section-title">Productos Relacionados</h2>
+    <div class="section-divider"></div>
+    <div class="collection-grid" id="relatedProducts"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>Valentina Niebles</h3>
+        <p>Diseño de modas de alta costura. Elegancia, exclusividad y pasión en cada creación.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Explorar</h4>
+        <ul>
+          <li><a href="coleccion.html">Colección</a></li>
+          <li><a href="disenos.html">Diseños a Medida</a></li>
+          <li><a href="agendar.html">Agendar Cita</a></li>
+          <li><a href="pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+          <li><a href="pedidos.html">Mis Pedidos</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="https://wa.me/573245947260"><i class="bi bi-whatsapp"></i> WhatsApp</a></li>
+          <li><a href="mailto:valentina@niebles.com"><i class="bi bi-envelope"></i> Email</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Valentina Niebles. Todos los derechos reservados. Hecho con amor.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="js/main.js"></script>
+</body>
+</html>
