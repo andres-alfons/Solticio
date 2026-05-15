@@ -1105,6 +1105,7 @@
   else init();
 
   window.VNChatbot = {
+    init: () => {},
     open: () => { if (!state.isOpen) toggleChat(); },
     close: () => { if (state.isOpen) toggleChat(); },
     sendMessage: (t) => handleUserInput(t),
