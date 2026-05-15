@@ -53,69 +53,82 @@
   <script src="../js/auth.js"></script>
   <script src="../js/notifications.js"></script>
   <script>
-    if (!Auth.isLoggedIn()) { window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname); }
+    (async function() {
+      await new Promise(resolve => {
+        if (Auth.isLoggedIn()) return resolve();
+        window.addEventListener('auth:change', resolve, { once: true });
+        setTimeout(resolve, 2000);
+      });
 
-    const user = Auth.getCurrentUser();
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
 
-    const orders = DataStore.getAll('orders', { userId: user.id }).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const user = Auth.getCurrentUser();
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
-    if (orders.length === 0) {
-      document.getElementById('ordersList').innerHTML = `
-        <div class="account-empty">
-          <div class="account-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
-          <div class="account-empty-title">No tienes pedidos aún</div>
-          <div class="account-empty-text">Explora nuestra colección y encuentra tu prenda ideal</div>
-          <a href="../coleccion.html" class="account-btn account-btn-primary">Ver Colección</a>
-        </div>`;
-    } else {
-      const statusSteps = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado'];
-      const statusLabels = ['Recibido', 'Confirmado', 'En Confección', 'Enviado', 'Entregado'];
-      const statusIcons = ['📋', '✅', '✂️', '📦', '🏠'];
-      const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
+      const orders = await DataStore.getOrders({ userId: user.id });
+      const sortedOrders = orders.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
 
-      document.getElementById('ordersList').innerHTML = orders.map(order => {
-        const currentIdx = statusSteps.indexOf(order.status);
-        let progress = '<div class="account-progress">';
-        statusSteps.forEach((step, i) => {
-          let cls = '';
-          if (i < currentIdx) cls = 'completed';
-          else if (i === currentIdx) cls = 'current';
-          progress += `<div class="account-progress-step ${cls}"><div class="account-progress-dot">${statusIcons[i]}</div><div class="account-progress-label">${statusLabels[i]}</div></div>`;
-        });
-        progress += '</div>';
-
-        return `
-          <div class="account-order-card">
-            <div class="account-order-header">
-              <div>
-                <span class="account-order-id">${order.id}</span>
-                <span class="account-badge account-badge-${statusBadges[order.status] || 'info'}" style="margin-left:8px;">${order.status.replace('_', ' ')}</span>
-              </div>
-              <span class="account-order-date">${order.date}</span>
-            </div>
-            <div style="display:flex;gap:16px;align-items:center;">
-              <div class="account-order-products">
-                ${order.products.map(p => `<div class="account-order-product-thumb">${p.name[0]}</div>`).join('')}
-              </div>
-              <div class="account-order-product-info">
-                <div class="account-order-product-name">${order.products.map(p => p.name).join(', ')}</div>
-                <div class="account-order-product-detail">${order.products.map(p => `${p.size} · ${p.color}`).join(' | ')}</div>
-                ${order.tracking ? `<div class="account-order-product-detail" style="margin-top:4px;">📦 ${order.carrier} · Guía: ${order.tracking}</div>` : ''}
-              </div>
-              <div class="account-order-total">
-                <div class="account-order-total-label">Total</div>
-                <div class="account-order-total-value">$${order.total.toLocaleString('es-CO')}</div>
-              </div>
-            </div>
-            ${progress}
+      if (sortedOrders.length === 0) {
+        document.getElementById('ordersList').innerHTML = `
+          <div class="account-empty">
+            <div class="account-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
+            <div class="account-empty-title">No tienes pedidos aún</div>
+            <div class="account-empty-text">Explora nuestra colección y encuentra tu prenda ideal</div>
+            <a href="../coleccion.html" class="account-btn account-btn-primary">Ver Colección</a>
           </div>`;
-      }).join('');
-    }
+      } else {
+        const statusSteps = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado'];
+        const statusLabels = ['Recibido', 'Confirmado', 'En Confección', 'Enviado', 'Entregado'];
+        const statusIcons = ['📋', '✅', '✂️', '📦', '🏠'];
+        const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
 
-    Notifications.render();
+        document.getElementById('ordersList').innerHTML = sortedOrders.map(order => {
+          const currentIdx = statusSteps.indexOf(order.status);
+          let progress = '<div class="account-progress">';
+          statusSteps.forEach((step, i) => {
+            let cls = '';
+            if (i < currentIdx) cls = 'completed';
+            else if (i === currentIdx) cls = 'current';
+            progress += `<div class="account-progress-step ${cls}"><div class="account-progress-dot">${statusIcons[i]}</div><div class="account-progress-label">${statusLabels[i]}</div></div>`;
+          });
+          progress += '</div>';
+
+          const orderDate = order.created_at || order.date;
+          return `
+            <div class="account-order-card">
+              <div class="account-order-header">
+                <div>
+                  <span class="account-order-id">${order.id}</span>
+                  <span class="account-badge account-badge-${statusBadges[order.status] || 'info'}" style="margin-left:8px;">${order.status.replace('_', ' ')}</span>
+                </div>
+                <span class="account-order-date">${new Date(orderDate).toLocaleDateString('es-CO')}</span>
+              </div>
+              <div style="display:flex;gap:16px;align-items:center;">
+                <div class="account-order-products">
+                  ${(order.products || []).map(p => `<div class="account-order-product-thumb">${(p.name || 'P')[0]}</div>`).join('')}
+                </div>
+                <div class="account-order-product-info">
+                  <div class="account-order-product-name">${(order.products || []).map(p => p.name).join(', ')}</div>
+                  <div class="account-order-product-detail">${(order.products || []).map(p => `${p.size || ''} ${p.color || ''}`).join(' | ')}</div>
+                  ${order.tracking ? `<div class="account-order-product-detail" style="margin-top:4px;">📦 ${order.carrier} · Guía: ${order.tracking}</div>` : ''}
+                </div>
+                <div class="account-order-total">
+                  <div class="account-order-total-label">Total</div>
+                  <div class="account-order-total-value">$${(order.total || 0).toLocaleString('es-CO')}</div>
+                </div>
+              </div>
+              ${progress}
+            </div>`;
+        }).join('');
+      }
+
+      Notifications.render();
+    })();
   </script>
 </body>
 </html>

@@ -59,34 +59,47 @@
   <script src="../js/auth.js"></script>
   <script src="../js/notifications.js"></script>
   <script>
-    if (!Auth.isLoggedIn()) { window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname); }
-    const user = Auth.getCurrentUser();
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    (async function() {
+      await new Promise(resolve => {
+        if (Auth.isLoggedIn()) return resolve();
+        window.addEventListener('auth:change', resolve, { once: true });
+        setTimeout(resolve, 2000);
+      });
 
-    const orders = DataStore.getAll('orders', { userId: user.id }).sort((a, b) => new Date(b.date) - new Date(a.date));
-    const totalSpent = orders.reduce((s, o) => s + o.total, 0);
-    const delivered = orders.filter(o => o.status === 'entregado').length;
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
 
-    document.getElementById('statsGrid').innerHTML = `
-      <div class="account-stat-card"><div class="account-stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="account-stat-value">${orders.length}</div><div class="account-stat-label">Compras totales</div></div>
-      <div class="account-stat-card"><div class="account-stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><div class="account-stat-value">$${(totalSpent/1000000).toFixed(1)}M</div><div class="account-stat-label">Total invertido</div></div>
-      <div class="account-stat-card"><div class="account-stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div class="account-stat-value">${delivered}</div><div class="account-stat-label">Entregados</div></div>
-    `;
+      const user = Auth.getCurrentUser();
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
-    const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
-    document.getElementById('purchasesBody').innerHTML = orders.length > 0 ? orders.map(o => `
-      <tr>
-        <td><strong style="color:var(--acc-text)">${o.id}</strong></td>
-        <td>${o.date}</td>
-        <td>${o.products.map(p => p.name).join(', ')}</td>
-        <td style="color:var(--acc-gold);font-weight:600;">$${o.total.toLocaleString('es-CO')}</td>
-        <td><span class="account-badge account-badge-${statusBadges[o.status] || 'info'}">${o.status.replace('_', ' ')}</span></td>
-      </tr>
-    `).join('') : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--acc-text-muted);">No hay compras registradas</td></tr>';
+      const orders = await DataStore.getOrders({ userId: user.id });
+      const sortedOrders = orders.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+      const totalSpent = sortedOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const delivered = sortedOrders.filter(o => o.status === 'entregado').length;
 
-    Notifications.render();
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="account-stat-card"><div class="account-stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="account-stat-value">${sortedOrders.length}</div><div class="account-stat-label">Compras totales</div></div>
+        <div class="account-stat-card"><div class="account-stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><div class="account-stat-value">$${(totalSpent/1000000).toFixed(1)}M</div><div class="account-stat-label">Total invertido</div></div>
+        <div class="account-stat-card"><div class="account-stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div class="account-stat-value">${delivered}</div><div class="account-stat-label">Entregados</div></div>
+      `;
+
+      const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
+      document.getElementById('purchasesBody').innerHTML = sortedOrders.length > 0 ? sortedOrders.map(o => `
+        <tr>
+          <td><strong style="color:var(--acc-text)">${o.id}</strong></td>
+          <td>${new Date(o.created_at || o.date).toLocaleDateString('es-CO')}</td>
+          <td>${(o.products || []).map(p => p.name).join(', ')}</td>
+          <td style="color:var(--acc-gold);font-weight:600;">$${(o.total || 0).toLocaleString('es-CO')}</td>
+          <td><span class="account-badge account-badge-${statusBadges[o.status] || 'info'}">${o.status.replace('_', ' ')}</span></td>
+        </tr>
+      `).join('') : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--acc-text-muted);">No hay compras registradas</td></tr>';
+
+      Notifications.render();
+    })();
   </script>
 </body>
 </html>

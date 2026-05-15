@@ -415,52 +415,60 @@ function removeExistingModal() {
 }
 
 function updateAuthUI() {
-  const user = Auth.getCurrentUser();
-  const loginBtn = document.getElementById('googleLoginBtn');
-  const userDisplay = document.getElementById('userDisplay');
-  const navUser = document.getElementById('navUser');
+  function renderNav(user) {
+    const loginBtn = document.getElementById('googleLoginBtn');
+    const userDisplay = document.getElementById('userDisplay');
+    const navUser = document.getElementById('navUser');
 
-  if (!user) {
-    if (loginBtn) loginBtn.style.display = '';
-    if (userDisplay) userDisplay.classList.remove('active');
+    if (!user) {
+      if (loginBtn) loginBtn.style.display = '';
+      if (userDisplay) userDisplay.classList.remove('active');
+      if (navUser) {
+        navUser.innerHTML = `<a href="auth/login.html" class="nav-auth-btn"><i class="bi bi-person"></i> Iniciar Sesión</a>`;
+      }
+      return;
+    }
+
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (userDisplay) {
+      userDisplay.classList.add('active');
+      userDisplay.querySelector('.login-name').textContent = user.name;
+      const avatar = userDisplay.querySelector('.login-avatar');
+      if (avatar && user.avatar) avatar.src = user.avatar;
+    }
     if (navUser) {
-      navUser.innerHTML = `<a href="auth/login.html" class="nav-auth-btn"><i class="bi bi-person"></i> Iniciar Sesión</a>`;
-    }
-    return;
-  }
-
-  if (loginBtn) loginBtn.style.display = 'none';
-  if (userDisplay) {
-    userDisplay.classList.add('active');
-    userDisplay.querySelector('.login-name').textContent = user.name;
-    const avatar = userDisplay.querySelector('.login-avatar');
-    if (avatar && user.avatar) avatar.src = user.avatar;
-  }
-  if (navUser) {
-    const roleIcon = user.role === 'admin' ? 'bi-shield-check' : user.role === 'manager' ? 'bi-shield' : 'bi-person';
-    navUser.innerHTML = `
-      <div class="nav-user-dropdown">
-        <a href="account/index.html" class="nav-user-info">
-          <img src="${user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=632432&color=F2E5A1&size=40'}" alt="${user.name}" class="nav-user-avatar">
-          <span>${user.name}</span>
-        </a>
-        <div class="nav-user-menu">
-          <a href="account/index.html"><i class="bi bi-speedometer2"></i> Mi Cuenta</a>
-          <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
-          <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
-          <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
-          ${user.role === 'admin' || user.role === 'manager' ? `<a href="admin/index.html"><i class="bi bi-${roleIcon}"></i> Panel Admin</a>` : ''}
-          <button id="logoutBtn" class="nav-logout-btn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+      const roleIcon = user.role === 'admin' ? 'bi-shield-check' : user.role === 'manager' ? 'bi-shield' : 'bi-person';
+      navUser.innerHTML = `
+        <div class="nav-user-dropdown">
+          <a href="account/index.html" class="nav-user-info">
+            <img src="${user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=632432&color=F2E5A1&size=40'}" alt="${user.name}" class="nav-user-avatar">
+            <span>${user.name}</span>
+          </a>
+          <div class="nav-user-menu">
+            <a href="account/index.html"><i class="bi bi-speedometer2"></i> Mi Cuenta</a>
+            <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
+            <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
+            <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
+            ${user.role === 'admin' || user.role === 'manager' ? `<a href="admin/index.html"><i class="bi bi-${roleIcon}"></i> Panel Admin</a>` : ''}
+            <button id="logoutBtn" class="nav-logout-btn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#logoutBtn')) {
+        Auth.signOut();
+        window.location.reload();
+      }
+    });
   }
 
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('#logoutBtn')) {
-      Auth.signOut();
-      window.location.reload();
-    }
+  const currentUser = Auth.getCurrentUser();
+  renderNav(currentUser);
+
+  window.addEventListener('auth:change', (e) => {
+    renderNav(e.detail.user);
   });
 }
 

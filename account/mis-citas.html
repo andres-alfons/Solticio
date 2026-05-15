@@ -66,48 +66,60 @@
   <script src="../js/auth.js"></script>
   <script src="../js/notifications.js"></script>
   <script>
-    if (!Auth.isLoggedIn()) { window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname); }
-    const user = Auth.getCurrentUser();
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    (async function() {
+      await new Promise(resolve => {
+        if (Auth.isLoggedIn()) return resolve();
+        window.addEventListener('auth:change', resolve, { once: true });
+        setTimeout(resolve, 2000);
+      });
 
-    const allAppts = DataStore.getAll('appointments', { userId: user.id });
-    const upcoming = allAppts.filter(a => new Date(a.date) >= new Date() && a.status !== 'cancelada').sort((a, b) => new Date(a.date) - new Date(b.date));
-    const history = allAppts.filter(a => new Date(a.date) < new Date() || a.status === 'cancelada').sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (!Auth.isLoggedIn()) {
+        window.location.href = '../auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
 
-    const statusBadges = { confirmada: 'success', pendiente: 'warning', cancelada: 'danger', completada: 'info' };
+      const user = Auth.getCurrentUser();
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
-    if (upcoming.length > 0) {
-      document.getElementById('appointmentsList').innerHTML = upcoming.map(a => `
-        <div class="account-order-card" style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div style="font-size:15px;font-weight:600;color:var(--acc-text);">${a.type}</div>
-            <div style="font-size:13px;color:var(--acc-text-muted);margin-top:4px;">📅 ${a.date} · 🕐 ${a.time}</div>
-            ${a.notes ? `<div style="font-size:12px;color:var(--acc-text-muted);margin-top:4px;">📝 ${a.notes}</div>` : ''}
+      const allAppts = await DataStore.getAppointments({ userId: user.id });
+      const upcoming = allAppts.filter(a => new Date(a.date) >= new Date() && a.status !== 'cancelada').sort((a, b) => new Date(a.date) - new Date(b.date));
+      const history = allAppts.filter(a => new Date(a.date) < new Date() || a.status === 'cancelada').sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const statusBadges = { confirmada: 'success', pendiente: 'warning', cancelada: 'danger', completada: 'info' };
+
+      if (upcoming.length > 0) {
+        document.getElementById('appointmentsList').innerHTML = upcoming.map(a => `
+          <div class="account-order-card" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:15px;font-weight:600;color:var(--acc-text);">${a.type}</div>
+              <div style="font-size:13px;color:var(--acc-text-muted);margin-top:4px;">📅 ${a.date} · 🕐 ${a.time}</div>
+              ${a.notes ? `<div style="font-size:12px;color:var(--acc-text-muted);margin-top:4px;">📝 ${a.notes}</div>` : ''}
+            </div>
+            <span class="account-badge account-badge-${statusBadges[a.status] || 'info'}">${a.status}</span>
           </div>
-          <span class="account-badge account-badge-${statusBadges[a.status] || 'info'}">${a.status}</span>
-        </div>
-      `).join('');
-    } else {
-      document.getElementById('appointmentsList').innerHTML = '<div style="text-align:center;padding:30px;color:var(--acc-text-muted);font-size:13px;">No tienes citas próximas</div>';
-    }
+        `).join('');
+      } else {
+        document.getElementById('appointmentsList').innerHTML = '<div style="text-align:center;padding:30px;color:var(--acc-text-muted);font-size:13px;">No tienes citas próximas</div>';
+      }
 
-    if (history.length > 0) {
-      document.getElementById('appointmentsHistory').innerHTML = history.map(a => `
-        <div class="account-order-card" style="display:flex;align-items:center;justify-content:space-between;opacity:0.7;">
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--acc-text);">${a.type}</div>
-            <div style="font-size:12px;color:var(--acc-text-muted);margin-top:4px;">📅 ${a.date} · 🕐 ${a.time}</div>
+      if (history.length > 0) {
+        document.getElementById('appointmentsHistory').innerHTML = history.map(a => `
+          <div class="account-order-card" style="display:flex;align-items:center;justify-content:space-between;opacity:0.7;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--acc-text);">${a.type}</div>
+              <div style="font-size:12px;color:var(--acc-text-muted);margin-top:4px;">📅 ${a.date} · 🕐 ${a.time}</div>
+            </div>
+            <span class="account-badge account-badge-${statusBadges[a.status] || 'info'}">${a.status}</span>
           </div>
-          <span class="account-badge account-badge-${statusBadges[a.status] || 'info'}">${a.status}</span>
-        </div>
-      `).join('');
-    } else {
-      document.getElementById('appointmentsHistory').innerHTML = '<div style="text-align:center;padding:20px;color:var(--acc-text-muted);font-size:13px;">Sin historial de citas</div>';
-    }
+        `).join('');
+      } else {
+        document.getElementById('appointmentsHistory').innerHTML = '<div style="text-align:center;padding:20px;color:var(--acc-text-muted);font-size:13px;">Sin historial de citas</div>';
+      }
 
-    Notifications.render();
+      Notifications.render();
+    })();
   </script>
 </body>
 </html>
