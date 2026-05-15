@@ -49,15 +49,17 @@
     <div class="account-notif-list" id="notifList"></div>
   </div>
 
-  <script src="../js/data-store.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
   <script src="../js/auth.js"></script>
+  <script src="../js/data-store.js"></script>
   <script src="../js/notifications.js"></script>
   <script>
     (async function() {
       await new Promise(resolve => {
         if (Auth.isLoggedIn()) return resolve();
         window.addEventListener('auth:change', resolve, { once: true });
-        setTimeout(resolve, 2000);
+        setTimeout(resolve, 3000);
       });
 
       if (!Auth.isLoggedIn()) {
@@ -71,7 +73,7 @@
       document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
       const orders = await DataStore.getOrders({ userId: user.id });
-      const sortedOrders = orders.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+      const sortedOrders = orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       if (sortedOrders.length === 0) {
         document.getElementById('ordersList').innerHTML = `
@@ -98,7 +100,8 @@
           });
           progress += '</div>';
 
-          const orderDate = order.created_at || order.date;
+          const orderDate = new Date(order.created_at).toLocaleDateString('es-CO');
+          const products = order.products || [];
           return `
             <div class="account-order-card">
               <div class="account-order-header">
@@ -106,15 +109,15 @@
                   <span class="account-order-id">${order.id}</span>
                   <span class="account-badge account-badge-${statusBadges[order.status] || 'info'}" style="margin-left:8px;">${order.status.replace('_', ' ')}</span>
                 </div>
-                <span class="account-order-date">${new Date(orderDate).toLocaleDateString('es-CO')}</span>
+                <span class="account-order-date">${orderDate}</span>
               </div>
               <div style="display:flex;gap:16px;align-items:center;">
                 <div class="account-order-products">
-                  ${(order.products || []).map(p => `<div class="account-order-product-thumb">${(p.name || 'P')[0]}</div>`).join('')}
+                  ${products.map(p => `<div class="account-order-product-thumb">${(p.name || 'P')[0]}</div>`).join('')}
                 </div>
                 <div class="account-order-product-info">
-                  <div class="account-order-product-name">${(order.products || []).map(p => p.name).join(', ')}</div>
-                  <div class="account-order-product-detail">${(order.products || []).map(p => `${p.size || ''} ${p.color || ''}`).join(' | ')}</div>
+                  <div class="account-order-product-name">${products.map(p => p.name).join(', ')}</div>
+                  <div class="account-order-product-detail">${products.map(p => `${p.size || ''} ${p.color || ''}`).join(' | ')}</div>
                   ${order.tracking ? `<div class="account-order-product-detail" style="margin-top:4px;">📦 ${order.carrier} · Guía: ${order.tracking}</div>` : ''}
                 </div>
                 <div class="account-order-total">

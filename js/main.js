@@ -415,53 +415,26 @@ function removeExistingModal() {
 }
 
 function updateAuthUI() {
-  function renderNav(user) {
-    const loginBtn = document.getElementById('googleLoginBtn');
-    const userDisplay = document.getElementById('userDisplay');
-    const navUser = document.getElementById('navUser');
+  const loginBtn = document.getElementById('googleLoginBtn');
+  const userDisplay = document.getElementById('userDisplay');
+  const logoutBtn = document.getElementById('logoutBtn');
 
+  if (!loginBtn || !userDisplay) return;
+
+  function renderNav(user) {
     if (!user) {
-      if (loginBtn) loginBtn.style.display = '';
-      if (userDisplay) userDisplay.classList.remove('active');
-      if (navUser) {
-        navUser.innerHTML = `<a href="auth/login.html" class="nav-auth-btn"><i class="bi bi-person"></i> Iniciar Sesión</a>`;
-      }
+      loginBtn.style.display = '';
+      userDisplay.classList.remove('active');
       return;
     }
 
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (userDisplay) {
-      userDisplay.classList.add('active');
-      userDisplay.querySelector('.login-name').textContent = user.name;
-      const avatar = userDisplay.querySelector('.login-avatar');
-      if (avatar && user.avatar) avatar.src = user.avatar;
+    loginBtn.style.display = 'none';
+    userDisplay.classList.add('active');
+    userDisplay.querySelector('.login-name').textContent = user.name;
+    const avatar = userDisplay.querySelector('.login-avatar');
+    if (avatar) {
+      avatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=632432&color=F2E5A1&size=56`;
     }
-    if (navUser) {
-      const roleIcon = user.role === 'admin' ? 'bi-shield-check' : user.role === 'manager' ? 'bi-shield' : 'bi-person';
-      navUser.innerHTML = `
-        <div class="nav-user-dropdown">
-          <a href="account/index.html" class="nav-user-info">
-            <img src="${user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=632432&color=F2E5A1&size=40'}" alt="${user.name}" class="nav-user-avatar">
-            <span>${user.name}</span>
-          </a>
-          <div class="nav-user-menu">
-            <a href="account/index.html"><i class="bi bi-speedometer2"></i> Mi Cuenta</a>
-            <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
-            <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
-            <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
-            ${user.role === 'admin' || user.role === 'manager' ? `<a href="admin/index.html"><i class="bi bi-${roleIcon}"></i> Panel Admin</a>` : ''}
-            <button id="logoutBtn" class="nav-logout-btn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
-          </div>
-        </div>
-      `;
-    }
-
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('#logoutBtn')) {
-        Auth.signOut();
-        window.location.reload();
-      }
-    });
   }
 
   const currentUser = Auth.getCurrentUser();
@@ -469,7 +442,41 @@ function updateAuthUI() {
 
   window.addEventListener('auth:change', (e) => {
     renderNav(e.detail.user);
+    if (e.detail.user) {
+      showWelcomeOverlay(e.detail.user.name);
+    }
   });
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Auth.signOut();
+      window.location.reload();
+    });
+  }
+}
+
+function showWelcomeOverlay(name) {
+  const existing = document.querySelector('.welcome-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'welcome-overlay';
+  overlay.innerHTML = `
+    <div class="welcome-content">
+      <div class="welcome-icon">✨</div>
+      <h2>¡Bienvenida, ${name.split(' ')[0]}!</h2>
+      <p>Tu sesión ha sido iniciada correctamente</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => overlay.classList.add('active'));
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 500);
+  }, 2500);
 }
 
 function initChatbot() {
@@ -582,9 +589,15 @@ async function initOrderTracking() {
   const trackingList = document.getElementById('trackingList');
   if (!trackingList) return;
 
+  await new Promise(resolve => {
+    if (Auth.isLoggedIn()) return resolve();
+    window.addEventListener('auth:change', resolve, { once: true });
+    setTimeout(resolve, 3000);
+  });
+
   const currentUser = Auth.getCurrentUser();
   if (!currentUser) {
-    window.location.href = 'auth/login.html';
+    window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
     return;
   }
 
@@ -613,7 +626,7 @@ async function initOrderTracking() {
   ];
 
   trackingList.innerHTML = orders.map(order => {
-    const orderDate = new Date(order.created_at || order.date);
+    const orderDate = new Date(order.created_at);
     const formattedDate = orderDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
     const statusInfo = statusMap[order.status] || statusMap['pendiente'];
     const currentStep = statusInfo.step;
@@ -622,8 +635,8 @@ async function initOrderTracking() {
 
     const products = order.products || [];
     const productNames = products.map(p => p.name).join(', ');
-    const productQty = order.products.reduce((sum, p) => sum + p.qty, 0);
-    const productSize = order.products[0]?.size || 'N/A';
+    const productQty = products.reduce((sum, p) => sum + (p.qty || 1), 0);
+    const productSize = products[0]?.size || 'N/A';
 
     const timelineHTML = statuses.map((status, i) => {
       let stepClass = i < currentStep ? 'completed' : i === currentStep ? 'current' : '';

@@ -106,12 +106,10 @@
   <script src="../js/data-store.js"></script>
   <script>
     (async function() {
-      // Wait for auth to initialize
       await new Promise(resolve => {
         if (Auth.isLoggedIn()) return resolve();
-        const handler = () => resolve();
-        window.addEventListener('auth:change', handler, { once: true });
-        setTimeout(() => resolve(), 2000);
+        window.addEventListener('auth:change', resolve, { once: true });
+        setTimeout(resolve, 3000);
       });
 
       if (!Auth.isLoggedIn()) {
@@ -125,7 +123,6 @@
       document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
       document.getElementById('welcomeText').textContent = `Hola, ${user.name.split(' ')[0]}`;
 
-      // Load data from Supabase
       const [orders, appointments] = await Promise.all([
         DataStore.getOrders({ userId: user.id }),
         DataStore.getAppointments({ userId: user.id })
@@ -158,10 +155,8 @@
         </div>
       `;
 
-      // Recent order
       if (orders.length > 0) {
-        const order = orders.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))[0];
-        const orderDate = order.created_at || order.date;
+        const order = orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
         const statusSteps = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado'];
         const statusLabels = ['Recibido', 'Confirmado', 'En Confeccion', 'Enviado', 'Entregado'];
         const statusIcons = ['📋', '✅', '✂️', '📦', '🏠'];
@@ -181,7 +176,7 @@
           <div class="account-order-card">
             <div class="account-order-header">
               <span class="account-order-id">${order.id}</span>
-              <span class="account-order-date">${new Date(orderDate).toLocaleDateString('es-CO')}</span>
+              <span class="account-order-date">${new Date(order.created_at).toLocaleDateString('es-CO')}</span>
             </div>
             <div style="display:flex;gap:16px;align-items:center;">
               <div class="account-order-products">
@@ -210,7 +205,6 @@
         `;
       }
 
-      // Upcoming appointments
       const upcoming = appointments.filter(a => new Date(a.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
       if (upcoming.length > 0) {
         document.getElementById('upcomingAppointments').innerHTML = upcoming.map(a => `
@@ -228,7 +222,6 @@
         `;
       }
 
-      // Notifications
       Notifications.render();
     })();
   </script>

@@ -24,13 +24,12 @@
       <li><a href="contacto.html"><i class="bi bi-chat-dots"></i> Contacto</a></li>
     </ul>
     <div class="nav-login">
-      <button class="login-btn" id="googleLoginBtn"><i class="bi bi-google"></i> Ingresar</button>
+      <button class="login-btn" id="googleLoginBtn" onclick="Auth.signInWithGoogle()"><i class="bi bi-google"></i> Ingresar</button>
       <div class="login-user" id="userDisplay">
-        <img class="login-avatar" src="" alt="Avatar">
+        <img class="login-avatar" src="" alt="">
         <span class="login-name"></span>
-        <button class="logout-btn" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
+        <button class="logout-btn" id="logoutBtn">Salir</button>
       </div>
-      <a href="auth/login.html" class="nav-auth-btn" id="navUser"><i class="bi bi-person"></i> Iniciar Sesión</a>
       <button class="notif-bell" id="notifBell" aria-label="Notificaciones"><i class="bi bi-bell"></i></button>
     </div>
     <div class="nav-toggle">
