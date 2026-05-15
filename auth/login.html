@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesion | Valentina Niebles</title>
+  <link rel="icon" type="image/svg+xml" href="../img/favicon.svg">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+  <a href="../index.html" class="auth-back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Volver al sitio
+  </a>
+
+  <div class="auth-page">
+    <div class="auth-visual">
+      <div class="auth-carousel">
+        <div class="auth-carousel-slide active">
+          <img src="../img/WhatsApp%20Image%202026-05-13%20at%2011.13.18%20PM%20(3).jpeg" alt="Aurora">
+          <div class="auth-carousel-overlay"></div>
+        </div>
+        <div class="auth-carousel-slide">
+          <img src="../img/WhatsApp%20Image%202026-05-13%20at%2011.13.17%20PM%20(3).jpeg" alt="Noche Eterna">
+          <div class="auth-carousel-overlay"></div>
+        </div>
+        <div class="auth-carousel-slide">
+          <img src="../img/WhatsApp%20Image%202026-05-13%20at%2011.08.59%20PM.jpeg" alt="Medianoche">
+          <div class="auth-carousel-overlay"></div>
+        </div>
+        <div class="auth-carousel-slide">
+          <img src="../img/WhatsApp%20Image%202026-05-13%20at%2011.08.55%20PM%20(3).jpeg" alt="Magnolia">
+          <div class="auth-carousel-overlay"></div>
+        </div>
+      </div>
+      <div class="auth-visual-content">
+        <div class="auth-visual-logo">VALENTINA NIEBLES</div>
+        <p class="auth-visual-tagline">Disenos que transforman suenos en arte. Elegancia atemporal, sofisticacion y exclusividad en cada puntada.</p>
+      </div>
+      <div class="auth-visual-dots">
+        <span class="auth-dot active"></span>
+        <span class="auth-dot"></span>
+        <span class="auth-dot"></span>
+        <span class="auth-dot"></span>
+      </div>
+    </div>
+
+    <div class="auth-form-side">
+      <div class="auth-form-container">
+        <div class="auth-form-header">
+          <div class="auth-form-logo">VALENTINA NIEBLES</div>
+          <h1 class="auth-form-title">Bienvenida de vuelta</h1>
+          <p class="auth-form-subtitle">Inicia sesion para acceder a tu cuenta</p>
+        </div>
+
+        <div id="authError" class="auth-error"></div>
+
+        <button id="googleBtn" class="auth-google-btn" type="button">
+          <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continuar con Google
+        </button>
+
+        <div class="auth-divider">
+          <div class="auth-divider-line"></div>
+          <span class="auth-divider-text">o continua con email</span>
+          <div class="auth-divider-line"></div>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <div class="auth-field">
+            <label for="email">Correo electronico</label>
+            <input type="email" id="email" placeholder="tu@correo.com" required autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="Tu contraseña" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="auth-submit" id="loginBtn">Iniciar Sesion</button>
+        </form>
+
+        <div class="auth-footer">
+          ¿No tienes cuenta? <a href="register.html">Crear cuenta</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    // Carousel
+    const slides = document.querySelectorAll('.auth-carousel-slide');
+    const dots = document.querySelectorAll('.auth-dot');
+    let currentSlide = 0;
+
+    function showSlide(n) {
+      slides.forEach(s => s.classList.remove('active'));
+      dots.forEach(d => d.classList.remove('active'));
+      slides[n].classList.add('active');
+      dots[n].classList.add('active');
+    }
+
+    setInterval(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      showSlide(currentSlide);
+    }, 4000);
+
+    // Google button
+    document.getElementById('googleBtn').addEventListener('click', () => {
+      Auth.signInWithGoogle();
+    });
+
+    // Login form
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('authError');
+      const btn = document.getElementById('loginBtn');
+
+      btn.textContent = 'Iniciando sesion...';
+      btn.disabled = true;
+
+      const result = await Auth.signInWithEmail(email, password);
+      if (result.success) {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        window.location.href = redirect ? decodeURIComponent(redirect) : '../account/index.html';
+      } else {
+        errorEl.textContent = result.error;
+        errorEl.classList.add('show');
+        btn.textContent = 'Iniciar Sesion';
+        btn.disabled = false;
+      }
+    });
+
+    // Redirect if already logged in
+    window.addEventListener('DOMContentLoaded', () => {
+      if (Auth.isLoggedIn()) {
+        window.location.href = '../account/index.html';
+      }
+    });
+  </script>
+</body>
+</html>

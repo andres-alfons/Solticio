@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin | Valentina Niebles</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="sidebar">
+      <div class="admin-sidebar-header">
+        <h2>VALENTINA NIEBLES</h2>
+        <p>Panel Admin</p>
+      </div>
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-section-title">Principal</div>
+          <a class="admin-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+          </a>
+          <a class="admin-nav-item" data-page="products" onclick="navigateTo('products')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            Productos
+          </a>
+          <a class="admin-nav-item" data-page="orders" onclick="navigateTo('orders')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Pedidos
+            <span class="admin-nav-badge" id="ordersBadge">3</span>
+          </a>
+          <a class="admin-nav-item" data-page="deliveries" onclick="navigateTo('deliveries')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            Entregas
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-section-title">Gestión</div>
+          <a class="admin-nav-item" data-page="clients" onclick="navigateTo('clients')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Clientes
+          </a>
+          <a class="admin-nav-item" data-page="appointments" onclick="navigateTo('appointments')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Citas
+            <span class="admin-nav-badge" id="apptBadge">2</span>
+          </a>
+          <a class="admin-nav-item" data-page="inventory" onclick="navigateTo('inventory')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Inventario
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-section-title">Análisis</div>
+          <a class="admin-nav-item" data-page="stats" onclick="navigateTo('stats')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Estadísticas
+          </a>
+          <a class="admin-nav-item" data-page="reports" onclick="navigateTo('reports')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Reportes
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-section-title">Sistema</div>
+          <a class="admin-nav-item" data-page="settings" onclick="navigateTo('settings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Configuración
+          </a>
+        </div>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <div class="admin-user-info" onclick="toggleUserMenu()">
+          <div class="admin-user-avatar" id="userAvatar">VN</div>
+          <div class="admin-user-details">
+            <div class="admin-user-name" id="userName">Valentina Niebles</div>
+            <div class="admin-user-role" id="userRole">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Header -->
+      <header class="admin-header">
+        <div class="admin-header-left">
+          <button class="admin-header-btn" onclick="toggleSidebar()" style="display:none" id="menuBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div>
+            <h1 class="admin-header-title" id="pageTitle">Dashboard</h1>
+            <p class="admin-header-breadcrumb" id="breadcrumb">Panel · Dashboard</p>
+          </div>
+        </div>
+        <div class="admin-header-right">
+          <div class="admin-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="globalSearch" placeholder="Buscar en todo el panel...">
+          </div>
+          <button class="admin-header-btn" onclick="toggleNotifPanel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="admin-notif-dot" id="notifDot"></span>
+          </button>
+          <button class="admin-header-btn" onclick="logout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div class="admin-content">
+
+        <!-- ==================== DASHBOARD PAGE ==================== -->
+        <div class="admin-page active" id="page-dashboard">
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div class="admin-stat-header">
+                <div class="admin-stat-icon gold">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                </div>
+                <span class="admin-stat-change up">+12.5%</span>
+              </div>
+              <div class="admin-stat-value" id="statRevenue">$12.4M</div>
+              <div class="admin-stat-label">Ingresos del mes</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header">
+                <div class="admin-stat-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                </div>
+                <span class="admin-stat-change up">+8.2%</span>
+              </div>
+              <div class="admin-stat-value" id="statOrders">47</div>
+              <div class="admin-stat-label">Pedidos del mes</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header">
+                <div class="admin-stat-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <span class="admin-stat-change up">+15.3%</span>
+              </div>
+              <div class="admin-stat-value" id="statClients">186</div>
+              <div class="admin-stat-label">Clientes activos</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header">
+                <div class="admin-stat-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <span class="admin-stat-change down">-2.1%</span>
+              </div>
+              <div class="admin-stat-value" id="statAppointments">12</div>
+              <div class="admin-stat-label">Citas esta semana</div>
+            </div>
+          </div>
+
+          <div class="admin-charts-grid">
+            <div class="admin-chart-card">
+              <div class="admin-chart-header">
+                <h3 class="admin-chart-title">Ventas Mensuales</h3>
+                <div class="admin-chart-actions">
+                  <button class="admin-table-filter active" onclick="updateChart('monthly', this)">Mensual</button>
+                  <button class="admin-table-filter" onclick="updateChart('weekly', this)">Semanal</button>
+                </div>
+              </div>
+              <canvas id="salesChart" class="admin-chart-canvas"></canvas>
+            </div>
+            <div class="admin-chart-card">
+              <div class="admin-chart-header">
+                <h3 class="admin-chart-title">Ventas por Categoría</h3>
+              </div>
+              <div class="admin-donut-container">
+                <canvas id="categoryChart" width="200" height="200"></canvas>
+                <div class="admin-donut-legend" id="categoryLegend"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="admin-table-card">
+              <div class="admin-table-header">
+                <h3 class="admin-table-title">Pedidos Recientes</h3>
+                <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="navigateTo('orders')">Ver todos</button>
+              </div>
+              <table class="admin-table">
+                <thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
+                <tbody id="recentOrdersBody"></tbody>
+              </table>
+            </div>
+            <div class="admin-table-card">
+              <div class="admin-table-header">
+                <h3 class="admin-table-title">Actividad Reciente</h3>
+              </div>
+              <div style="padding:16px;" class="admin-activity-list" id="activityList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== PRODUCTS PAGE ==================== -->
+        <div class="admin-page" id="page-products">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h2 style="font-size:20px;font-weight:700;">Productos</h2>
+              <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;" id="productCount">24 productos</p>
+            </div>
+            <button class="admin-btn admin-btn-primary" onclick="openProductModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo Producto
+            </button>
+          </div>
+
+          <div class="admin-table-card">
+            <div class="admin-table-header">
+              <div class="admin-table-filters">
+                <button class="admin-table-filter active" onclick="filterProducts('all', this)">Todos</button>
+                <button class="admin-table-filter" onclick="filterProducts('vestidos', this)">Vestidos</button>
+                <button class="admin-table-filter" onclick="filterProducts('conjuntos', this)">Conjuntos</button>
+                <button class="admin-table-filter" onclick="filterProducts('blazers', this)">Blazers</button>
+                <button class="admin-table-filter" onclick="filterProducts('active', this)">Activos</button>
+                <button class="admin-table-filter" onclick="filterProducts('inactive', this)">Ocultos</button>
+              </div>
+            </div>
+            <table class="admin-table">
+              <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+            <div class="admin-table-pagination">
+              <span class="admin-table-info" id="productsPaginationInfo">Mostrando 1-10 de 24</span>
+              <div class="admin-pagination-btns" id="productsPagination"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== ORDERS PAGE ==================== -->
+        <div class="admin-page" id="page-orders">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h2 style="font-size:20px;font-weight:700;">Pedidos</h2>
+              <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;" id="orderCount">47 pedidos</p>
+            </div>
+          </div>
+
+          <div class="admin-table-card">
+            <div class="admin-table-header">
+              <div class="admin-table-filters">
+                <button class="admin-table-filter active" onclick="filterOrders('all', this)">Todos</button>
+                <button class="admin-table-filter" onclick="filterOrders('pendiente', this)">Pendientes</button>
+                <button class="admin-table-filter" onclick="filterOrders('confirmado', this)">Confirmados</button>
+                <button class="admin-table-filter" onclick="filterOrders('en producción', this)">En producción</button>
+                <button class="admin-table-filter" onclick="filterOrders('enviado', this)">Enviados</button>
+                <button class="admin-table-filter" onclick="filterOrders('entregado', this)">Entregados</button>
+              </div>
+            </div>
+            <table class="admin-table">
+              <thead><tr><th>Pedido</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== DELIVERIES PAGE ==================== -->
+        <div class="admin-page" id="page-deliveries">
+          <div style="margin-bottom:20px;">
+            <h2 style="font-size:20px;font-weight:700;">Entregas</h2>
+            <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Gestión de envíos y transportadoras</p>
+          </div>
+          <div id="deliveryAlerts"></div>
+          <div class="admin-table-card">
+            <table class="admin-table">
+              <thead><tr><th>Pedido</th><th>Cliente</th><th>Transportadora</th><th>Guía</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="deliveriesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== CLIENTS PAGE ==================== -->
+        <div class="admin-page" id="page-clients">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h2 style="font-size:20px;font-weight:700;">Clientes</h2>
+              <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;" id="clientCount">186 clientes</p>
+            </div>
+            <button class="admin-btn admin-btn-secondary" onclick="exportClients()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar
+            </button>
+          </div>
+          <div class="admin-table-card">
+            <table class="admin-table">
+              <thead><tr><th>Cliente</th><th>Email</th><th>Teléfono</th><th>Compras</th><th>Total Gastado</th><th>Tipo</th><th>Acciones</th></tr></thead>
+              <tbody id="clientsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== APPOINTMENTS PAGE ==================== -->
+        <div class="admin-page" id="page-appointments">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h2 style="font-size:20px;font-weight:700;">Citas</h2>
+              <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Gestión de citas y agenda</p>
+            </div>
+            <button class="admin-btn admin-btn-primary" onclick="openAppointmentModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nueva Cita
+            </button>
+          </div>
+          <div class="admin-table-card">
+            <div class="admin-table-header">
+              <div class="admin-table-filters">
+                <button class="admin-table-filter active" onclick="filterAppointments('all', this)">Todas</button>
+                <button class="admin-table-filter" onclick="filterAppointments('confirmada', this)">Confirmadas</button>
+                <button class="admin-table-filter" onclick="filterAppointments('pendiente', this)">Pendientes</button>
+                <button class="admin-table-filter" onclick="filterAppointments('cancelada', this)">Canceladas</button>
+              </div>
+            </div>
+            <table class="admin-table">
+              <thead><tr><th>Cliente</th><th>Tipo</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="appointmentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== INVENTORY PAGE ==================== -->
+        <div class="admin-page" id="page-inventory">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h2 style="font-size:20px;font-weight:700;">Inventario</h2>
+              <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Control de stock y movimientos</p>
+            </div>
+          </div>
+          <div id="inventoryAlerts"></div>
+          <div class="admin-table-card">
+            <table class="admin-table">
+              <thead><tr><th>Producto</th><th>SKU</th><th>Stock Actual</th><th>Stock Mínimo</th><th>Estado</th><th>Último Movimiento</th><th>Acciones</th></tr></thead>
+              <tbody id="inventoryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== STATS PAGE ==================== -->
+        <div class="admin-page" id="page-stats">
+          <div style="margin-bottom:20px;">
+            <h2 style="font-size:20px;font-weight:700;">Estadísticas</h2>
+            <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Análisis detallado de rendimiento</p>
+          </div>
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div class="admin-stat-header"><div class="admin-stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><span class="admin-stat-change up">+23.1%</span></div>
+              <div class="admin-stat-value">$4.2M</div><div class="admin-stat-label">Ventas esta semana</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header"><div class="admin-stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="admin-stat-change up">+18.7%</span></div>
+              <div class="admin-stat-value">2,847</div><div class="admin-stat-label">Productos vistos</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header"><div class="admin-stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="admin-stat-change up">+5.4%</span></div>
+              <div class="admin-stat-value">34.2%</div><div class="admin-stat-label">Tasa de conversión</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-header"><div class="admin-stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><span class="admin-stat-change down">-3.2%</span></div>
+              <div class="admin-stat-value">3</div><div class="admin-stat-label">Pedidos cancelados</div>
+            </div>
+          </div>
+          <div class="admin-charts-grid">
+            <div class="admin-chart-card">
+              <div class="admin-chart-header"><h3 class="admin-chart-title">Tendencia de Ventas (6 meses)</h3></div>
+              <canvas id="trendChart" class="admin-chart-canvas"></canvas>
+            </div>
+            <div class="admin-chart-card">
+              <div class="admin-chart-header"><h3 class="admin-chart-title">Top Productos</h3></div>
+              <div style="padding:16px;" id="topProducts"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== REPORTS PAGE ==================== -->
+        <div class="admin-page" id="page-reports">
+          <div style="margin-bottom:20px;">
+            <h2 style="font-size:20px;font-weight:700;">Reportes</h2>
+            <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Genera y exporta reportes</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+            <div class="admin-stat-card" style="cursor:pointer;" onclick="generateReport('sales')">
+              <div class="admin-stat-icon gold" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">Reporte de Ventas</h3>
+              <p style="font-size:13px;color:var(--admin-text-secondary);">Exporta ventas por período en PDF o Excel</p>
+            </div>
+            <div class="admin-stat-card" style="cursor:pointer;" onclick="generateReport('clients')">
+              <div class="admin-stat-icon blue" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">Reporte de Clientes</h3>
+              <p style="font-size:13px;color:var(--admin-text-secondary);">Historial de compras y datos de clientes</p>
+            </div>
+            <div class="admin-stat-card" style="cursor:pointer;" onclick="generateReport('products')">
+              <div class="admin-stat-icon green" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg></div>
+              <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">Reporte de Productos</h3>
+              <p style="font-size:13px;color:var(--admin-text-secondary);">Inventario, stock y rendimiento de productos</p>
+            </div>
+            <div class="admin-stat-card" style="cursor:pointer;" onclick="generateReport('inventory')">
+              <div class="admin-stat-icon purple" style="margin-bottom:12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+              <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">Reporte de Inventario</h3>
+              <p style="font-size:13px;color:var(--admin-text-secondary);">Movimientos de stock y alertas</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== SETTINGS PAGE ==================== -->
+        <div class="admin-page" id="page-settings">
+          <div style="margin-bottom:20px;">
+            <h2 style="font-size:20px;font-weight:700;">Configuración</h2>
+            <p style="font-size:13px;color:var(--admin-text-secondary);margin-top:4px;">Ajustes del panel y la tienda</p>
+          </div>
+
+          <div class="admin-settings-section">
+            <h3 class="admin-settings-title">Información de la Tienda</h3>
+            <p class="admin-settings-desc">Datos generales de tu negocio</p>
+            <div class="admin-form-grid">
+              <div class="admin-form-group"><label>Nombre de la tienda</label><input type="text" value="Valentina Niebles" id="settingStoreName"></div>
+              <div class="admin-form-group"><label>Email de contacto</label><input type="email" value="valentina@niebles.com" id="settingEmail"></div>
+              <div class="admin-form-group"><label>Teléfono</label><input type="text" value="+57 324 594 7260" id="settingPhone"></div>
+              <div class="admin-form-group"><label>Ubicación</label><input type="text" value="Barranquilla, Colombia" id="settingLocation"></div>
+              <div class="admin-form-group full-width"><label>Descripción</label><textarea id="settingDesc">Diseño de modas de alta costura. Elegancia, exclusividad y pasión en cada creación.</textarea></div>
+            </div>
+            <div style="margin-top:16px;"><button class="admin-btn admin-btn-primary" onclick="saveSettings()">Guardar Cambios</button></div>
+          </div>
+
+          <div class="admin-settings-section">
+            <h3 class="admin-settings-title">Notificaciones</h3>
+            <p class="admin-settings-desc">Configura las alertas del sistema</p>
+            <div class="admin-toggle">
+              <div class="admin-toggle-info"><div class="admin-toggle-label">Nuevos pedidos</div><div class="admin-toggle-desc">Recibe alerta cuando llegue un pedido nuevo</div></div>
+              <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="admin-toggle">
+              <div class="admin-toggle-info"><div class="admin-toggle-label">Stock bajo</div><div class="admin-toggle-desc">Alerta cuando un producto tenga poco stock</div></div>
+              <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="admin-toggle">
+              <div class="admin-toggle-info"><div class="admin-toggle-label">Nuevas citas</div><div class="admin-toggle-desc">Notificación de citas agendadas</div></div>
+              <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="admin-toggle">
+              <div class="admin-toggle-info"><div class="admin-toggle-label">Reportes semanales</div><div class="admin-toggle-desc">Resumen semanal por email</div></div>
+              <div class="admin-toggle-switch" onclick="this.classList.toggle('active')"></div>
+            </div>
+          </div>
+
+          <div class="admin-settings-section">
+            <h3 class="admin-settings-title">Seguridad</h3>
+            <p class="admin-settings-desc">Configuración de acceso y protección</p>
+            <div class="admin-form-grid">
+              <div class="admin-form-group"><label>Cambiar contraseña</label><input type="password" placeholder="Nueva contraseña" id="settingNewPass"></div>
+              <div class="admin-form-group"><label>Confirmar contraseña</label><input type="password" placeholder="Confirmar" id="settingConfirmPass"></div>
+            </div>
+            <div style="margin-top:16px;"><button class="admin-btn admin-btn-primary" onclick="changePassword()">Actualizar Contraseña</button></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Notification Panel -->
+  <div class="admin-notif-panel" id="notifPanel">
+    <div class="admin-notif-header">
+      <h3 class="admin-notif-title">Notificaciones</h3>
+      <button class="admin-modal-close" onclick="toggleNotifPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="admin-notif-list" id="notifList"></div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="admin-modal-overlay" id="productModal">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="productModalTitle">Nuevo Producto</h3>
+        <button class="admin-modal-close" onclick="closeProductModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <input type="hidden" id="productEditId">
+        <div class="admin-form-grid">
+          <div class="admin-form-group full-width"><label>Nombre</label><input type="text" id="prodName" placeholder="Nombre del producto"></div>
+          <div class="admin-form-group"><label>Precio</label><input type="number" id="prodPrice" placeholder="0"></div>
+          <div class="admin-form-group"><label>Categoría</label><select id="prodCategory"><option value="vestidos">Vestidos</option><option value="conjuntos">Conjuntos</option><option value="blazers">Blazers</option><option value="accesorios">Accesorios</option></select></div>
+          <div class="admin-form-group"><label>Stock</label><input type="number" id="prodStock" placeholder="0"></div>
+          <div class="admin-form-group"><label>Stock mínimo</label><input type="number" id="prodMinStock" placeholder="5"></div>
+          <div class="admin-form-group full-width"><label>Descripción</label><textarea id="prodDesc" placeholder="Descripción del producto"></textarea></div>
+          <div class="admin-form-group"><label>Colores (separados por coma)</label><input type="text" id="prodColors" placeholder="negro, blanco, dorado"></div>
+          <div class="admin-form-group"><label>Tallas</label><input type="text" id="prodSizes" placeholder="XS, S, M, L, XL"></div>
+          <div class="admin-form-group full-width"><label>Etiquetas (separadas por coma)</label><input type="text" id="prodTags" placeholder="elegante, gala, fiesta"></div>
+          <div class="admin-form-group"><label>Estado</label><select id="prodStatus"><option value="activo">Activo</option><option value="inactivo">Oculto</option><option value="agotado">Agotado</option></select></div>
+          <div class="admin-form-group"><label>Descuento (%)</label><input type="number" id="prodDiscount" placeholder="0" min="0" max="100"></div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeProductModal()">Cancelar</button>
+        <button class="admin-btn admin-btn-primary" onclick="saveProduct()">Guardar Producto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Modal -->
+  <div class="admin-modal-overlay" id="appointmentModal">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">Nueva Cita</h3>
+        <button class="admin-modal-close" onclick="closeAppointmentModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <div class="admin-form-grid">
+          <div class="admin-form-group"><label>Cliente</label><input type="text" id="apptClient" placeholder="Nombre del cliente"></div>
+          <div class="admin-form-group"><label>Tipo de cita</label><select id="apptType"><option value="Diseño Personalizado">Diseño Personalizado</option><option value="Toma de Medidas">Toma de Medidas</option><option value="Asesoría de Moda">Asesoría de Moda</option><option value="Prueba de Vestuario">Prueba de Vestuario</option></select></div>
+          <div class="admin-form-group"><label>Fecha</label><input type="date" id="apptDate"></div>
+          <div class="admin-form-group"><label>Hora</label><select id="apptTime"><option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option></select></div>
+          <div class="admin-form-group full-width"><label>Notas</label><textarea id="apptNotes" placeholder="Notas adicionales..."></textarea></div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeAppointmentModal()">Cancelar</button>
+        <button class="admin-btn admin-btn-primary" onclick="saveAppointment()">Agendar Cita</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts Container -->
+  <div class="admin-toasts" id="toasts"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

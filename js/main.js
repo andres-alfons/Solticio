@@ -34,10 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initSmoothScroll();
   initProductCards();
-  initGoogleLogin();
   initOrderTracking();
-  initAuthUI();
   initProductPage();
+  initChatbot();
+  initNotifications();
+  updateAuthUI();
 });
 
 function initNavbar() {
@@ -78,7 +79,7 @@ function initNavbar() {
 
 function initWhatsApp() {
   const phone = '573245947260';
-  const message = encodeURIComponent('Hola Valentina Niebles, me encantaría saber más sobre tus diseños ✨');
+  const message = encodeURIComponent('Hola Valentina Niebles, me encantaría saber más sobre tus diseños');
   const wspLink = `https://wa.me/${phone}?text=${message}`;
 
   const container = document.createElement('div');
@@ -86,7 +87,7 @@ function initWhatsApp() {
   container.innerHTML = `
     <div class="wsp-aura"></div>
     <a href="${wspLink}" target="_blank" rel="noopener noreferrer" class="wsp-btn" aria-label="Contactar por WhatsApp">
-      <img src="img/Whatsapp_icon-icons.com_66931.png" alt="WhatsApp">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
     </a>
     <span class="wsp-tooltip">¿Hablamos?</span>
   `;
@@ -347,7 +348,7 @@ function openPaymentModal(product) {
     });
   });
 
-  overlay.querySelector('#paymentForm').addEventListener('submit', (e) => {
+  overlay.querySelector('#paymentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payment = overlay.querySelector('#payMethods .payment-method.selected')?.dataset.method || 'transferencia';
     const orderId = 'VN-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase();
@@ -360,25 +361,34 @@ function openPaymentModal(product) {
       if (qtyEl) qty = qtyEl.value;
     } catch(e) {}
 
-    const order = {
+    const currentUser = Auth.getCurrentUser();
+    const orderData = {
       id: orderId,
-      product: product.name,
-      img: product.images[0],
-      price: product.price,
-      name: overlay.querySelector('#payName').value,
-      email: overlay.querySelector('#payEmail').value,
-      size, qty,
-      address: overlay.querySelector('#payAddress').value,
+      userId: currentUser ? currentUser.id : null,
+      client: overlay.querySelector('#payName').value,
+      email: currentUser ? currentUser.email : overlay.querySelector('#payEmail').value,
+      phone: '',
+      products: [{ name: product.name, qty: parseInt(qty), price: parseInt(product.price.replace(/\D/g, '')), size, color: '' }],
+      total: parseInt(product.price.replace(/\D/g, '')) * parseInt(qty),
+      status: 'pendiente',
       payment,
-      status: 'recibido',
-      statusStep: 0,
-      date: new Date().toISOString(),
-      estimatedDays: payment === 'tarjeta' ? 7 + Math.floor(Math.random()*5) : 10 + Math.floor(Math.random()*8),
+      address: overlay.querySelector('#payAddress').value,
+      notes: '',
+      tracking: '',
+      carrier: ''
     };
 
-    const orders = JSON.parse(localStorage.getItem('vn_orders') || '[]');
-    orders.unshift(order);
-    localStorage.setItem('vn_orders', JSON.stringify(orders));
+    await DataStore.createOrder(orderData);
+
+    if (currentUser) {
+      await DataStore.createNotification({
+        userId: currentUser.id,
+        type: 'order_update',
+        title: 'Pedido Confirmado!',
+        message: `Tu pedido #${orderId} de ${product.name} ha sido registrado.`,
+        read: false
+      });
+    }
 
     overlay.querySelector('#paymentForm').style.display = 'none';
     const success = overlay.querySelector('#paySuccess');
@@ -404,79 +414,252 @@ function removeExistingModal() {
   if (existing) { existing.parentNode.removeChild(existing); document.body.style.overflow = ''; }
 }
 
-function initGoogleLogin() {
-  const loginBtn = document.getElementById('googleLoginBtn');
-  if (!loginBtn) return;
-  loginBtn.addEventListener('click', () => googleLogin());
-  const savedUser = JSON.parse(localStorage.getItem('vn_user') || 'null');
-  if (savedUser) updateLoginUI(savedUser);
-}
-
-function googleLogin() {
-  if (typeof google !== 'undefined' && google.accounts) {
-    const clientId = '726831035289-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
-    const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId, scope: 'email profile',
-      callback: (response) => {
-        if (response.access_token) {
-          fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${response.access_token}` } })
-          .then(res => res.json()).then(data => {
-            const user = { name: data.name, email: data.email, picture: data.picture };
-            localStorage.setItem('vn_user', JSON.stringify(user));
-            updateLoginUI(user);
-          }).catch(() => simulateLogin());
-        }
-      },
-      error_callback: () => simulateLogin()
-    });
-    tokenClient.requestAccessToken();
-  } else { simulateLogin(); }
-}
-
-function simulateLogin() {
-  const user = { name: 'Cliente Especial', email: 'cliente@email.com', picture: 'https://ui-avatars.com/api/?name=Cliente+Especial&background=632432&color=F2E5A1&size=80&font-size=0.4' };
-  localStorage.setItem('vn_user', JSON.stringify(user));
-  updateLoginUI(user);
-}
-
-function updateLoginUI(user) {
+function updateAuthUI() {
+  const user = Auth.getCurrentUser();
   const loginBtn = document.getElementById('googleLoginBtn');
   const userDisplay = document.getElementById('userDisplay');
-  if (!loginBtn || !userDisplay) return;
-  loginBtn.style.display = 'none';
-  userDisplay.classList.add('active');
-  userDisplay.querySelector('.login-name').textContent = user.name;
-  const avatar = userDisplay.querySelector('.login-avatar');
-  if (avatar && user.picture) avatar.src = user.picture;
-}
+  const navUser = document.getElementById('navUser');
 
-function initAuthUI() {
-  const savedUser = JSON.parse(localStorage.getItem('vn_user') || 'null');
-  if (savedUser) {
-    const loginBtn = document.getElementById('googleLoginBtn');
-    const userDisplay = document.getElementById('userDisplay');
-    if (loginBtn && userDisplay) updateLoginUI(savedUser);
+  if (!user) {
+    if (loginBtn) loginBtn.style.display = '';
+    if (userDisplay) userDisplay.classList.remove('active');
+    if (navUser) {
+      navUser.innerHTML = `<a href="auth/login.html" class="nav-auth-btn"><i class="bi bi-person"></i> Iniciar Sesión</a>`;
+    }
+    return;
   }
+
+  if (loginBtn) loginBtn.style.display = 'none';
+  if (userDisplay) {
+    userDisplay.classList.add('active');
+    userDisplay.querySelector('.login-name').textContent = user.name;
+    const avatar = userDisplay.querySelector('.login-avatar');
+    if (avatar && user.avatar) avatar.src = user.avatar;
+  }
+  if (navUser) {
+    const roleIcon = user.role === 'admin' ? 'bi-shield-check' : user.role === 'manager' ? 'bi-shield' : 'bi-person';
+    navUser.innerHTML = `
+      <div class="nav-user-dropdown">
+        <a href="account/index.html" class="nav-user-info">
+          <img src="${user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=632432&color=F2E5A1&size=40'}" alt="${user.name}" class="nav-user-avatar">
+          <span>${user.name}</span>
+        </a>
+        <div class="nav-user-menu">
+          <a href="account/index.html"><i class="bi bi-speedometer2"></i> Mi Cuenta</a>
+          <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
+          <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
+          <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
+          ${user.role === 'admin' || user.role === 'manager' ? `<a href="admin/index.html"><i class="bi bi-${roleIcon}"></i> Panel Admin</a>` : ''}
+          <button id="logoutBtn" class="nav-logout-btn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+        </div>
+      </div>
+    `;
+  }
+
   document.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) {
-      localStorage.removeItem('vn_user');
-      const loginBtn = document.getElementById('googleLoginBtn');
-      const userDisplay = document.getElementById('userDisplay');
-      if (loginBtn && userDisplay) { loginBtn.style.display = ''; userDisplay.classList.remove('active'); }
+      Auth.signOut();
+      window.location.reload();
     }
   });
 }
 
-function initOrderTracking() {
+function initChatbot() {
+  if (typeof VNChatbot !== 'undefined') {
+    VNChatbot.init();
+  }
+}
+
+async function initNotifications() {
+  const user = Auth.getCurrentUser();
+  if (!user) return;
+
+  const notifBell = document.getElementById('notifBell');
+  if (!notifBell) return;
+
+  const unreadCount = await DataStore.getUnreadCount(user.id);
+
+  if (unreadCount > 0) {
+    notifBell.innerHTML = `<i class="bi bi-bell-fill"></i><span class="notif-badge">${unreadCount > 9 ? '9+' : unreadCount}</span>`;
+  } else {
+    notifBell.innerHTML = `<i class="bi bi-bell"></i>`;
+  }
+
+  notifBell.addEventListener('click', () => {
+    showNotificationsDropdown(user);
+  });
+}
+
+async function showNotificationsDropdown(user) {
+  const existing = document.getElementById('notifDropdown');
+  if (existing) existing.remove();
+
+  const allNotifs = await DataStore.getNotifications(user.id);
+  const userNotifs = allNotifs.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'notifDropdown';
+  dropdown.className = 'notif-dropdown';
+  dropdown.innerHTML = `
+    <div class="notif-header">
+      <h3>Notificaciones</h3>
+      <button id="markAllRead"><i class="bi bi-check-all"></i> Marcar todo leido</button>
+    </div>
+    <div class="notif-list">
+      ${userNotifs.length === 0 ? '<p class="notif-empty">No tienes notificaciones</p>' : userNotifs.map(n => `
+        <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}">
+          <div class="notif-icon">${getNotifIcon(n.type)}</div>
+          <div class="notif-content">
+            <strong>${n.title}</strong>
+            <p>${n.message}</p>
+            <span class="notif-time">${timeAgo(n.created_at || n.date)}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(dropdown);
+  requestAnimationFrame(() => dropdown.classList.add('active'));
+
+  dropdown.querySelector('#markAllRead')?.addEventListener('click', async () => {
+    await DataStore.markAllNotificationsRead(user.id);
+    initNotifications();
+    dropdown.remove();
+  });
+
+  dropdown.querySelectorAll('.notif-item').forEach(item => {
+    item.addEventListener('click', async () => {
+      const id = parseInt(item.dataset.id);
+      const notif = userNotifs.find(n => n.id === id);
+      if (notif && !notif.read) {
+        await DataStore.markNotificationRead(id);
+        initNotifications();
+      }
+      if (notif?.link) window.location.href = notif.link;
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#notifBell') && !e.target.closest('#notifDropdown')) {
+      dropdown.classList.remove('active');
+      setTimeout(() => dropdown.remove(), 300);
+    }
+  }, { once: true });
+}
+
+  notifBell.addEventListener('click', () => {
+    showNotificationsDropdown(user);
+  });
+}
+
+function showNotificationsDropdown(user) {
+  const existing = document.getElementById('notifDropdown');
+  if (existing) existing.remove();
+
+  const allNotifs = DataStore.getAll('notifications');
+  const userNotifs = allNotifs.filter(n => n.userId === user.id || n.userId === null).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'notifDropdown';
+  dropdown.className = 'notif-dropdown';
+  dropdown.innerHTML = `
+    <div class="notif-header">
+      <h3>Notificaciones</h3>
+      <button id="markAllRead"><i class="bi bi-check-all"></i> Marcar todo leído</button>
+    </div>
+    <div class="notif-list">
+      ${userNotifs.length === 0 ? '<p class="notif-empty">No tienes notificaciones</p>' : userNotifs.map(n => `
+        <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}">
+          <div class="notif-icon">${getNotifIcon(n.type)}</div>
+          <div class="notif-content">
+            <strong>${n.title}</strong>
+            <p>${n.message}</p>
+            <span class="notif-time">${timeAgo(n.date)}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(dropdown);
+  requestAnimationFrame(() => dropdown.classList.add('active'));
+
+  dropdown.querySelector('#markAllRead')?.addEventListener('click', () => {
+    userNotifs.forEach(n => {
+      if (!n.read) DataStore.update('notifications', n.id, { read: true });
+    });
+    initNotifications();
+    dropdown.remove();
+  });
+
+  dropdown.querySelectorAll('.notif-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const id = parseInt(item.dataset.id);
+      const notif = userNotifs.find(n => n.id === id);
+      if (notif && !notif.read) {
+        DataStore.update('notifications', id, { read: true });
+        initNotifications();
+      }
+      if (notif?.link) window.location.href = notif.link;
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#notifBell') && !e.target.closest('#notifDropdown')) {
+      dropdown.classList.remove('active');
+      setTimeout(() => dropdown.remove(), 300);
+    }
+  }, { once: true });
+}
+
+function getNotifIcon(type) {
+  const icons = {
+    order_update: '<i class="bi bi-bag-check"></i>',
+    delivery_update: '<i class="bi bi-truck"></i>',
+    appointment_reminder: '<i class="bi bi-calendar-check"></i>',
+    promotion: '<i class="bi bi-gift"></i>',
+    new_arrival: '<i class="bi bi-star"></i>'
+  };
+  return icons[type] || '<i class="bi bi-bell"></i>';
+}
+
+function timeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60) return 'Hace un momento';
+  if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `Hace ${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `Hace ${Math.floor(diff / 86400)}d`;
+  return date.toLocaleDateString('es-CO');
+}
+
+async function initOrderTracking() {
   const trackingList = document.getElementById('trackingList');
   if (!trackingList) return;
 
-  const orders = JSON.parse(localStorage.getItem('vn_orders') || '[]');
+  const currentUser = Auth.getCurrentUser();
+  if (!currentUser) {
+    window.location.href = 'auth/login.html';
+    return;
+  }
+
+  const orders = await DataStore.getOrders({ userId: currentUser.id });
 
   if (orders.length === 0) {
     trackingList.innerHTML = `<div class="no-orders"><i class="bi bi-inbox"></i><h3>Aún no tienes pedidos</h3><p>Explora nuestra colección y haz tu primer pedido.</p><a href="coleccion.html" class="btn btn-primary"><i class="bi bi-grid"></i> Ver Colección</a></div>`;
     return;
   }
+
+  const statusMap = {
+    'pendiente': { label: 'Recibido', icon: 'bi-inbox', step: 0 },
+    'confirmado': { label: 'En Proceso', icon: 'bi-gear', step: 1 },
+    'en_produccion': { label: 'Confección', icon: 'bi-scissors', step: 2 },
+    'enviado': { label: 'Envío', icon: 'bi-truck', step: 3 },
+    'entregado': { label: 'Entregado', icon: 'bi-box-seam', step: 4 }
+  };
+  const statusClasses = ['status-recibido','status-proceso','status-confeccion','status-enviado','status-entregado'];
 
   const statuses = [
     { label: 'Recibido', icon: 'bi-inbox' },
@@ -485,14 +668,19 @@ function initOrderTracking() {
     { label: 'Envío', icon: 'bi-truck' },
     { label: 'Entregado', icon: 'bi-box-seam' }
   ];
-  const statusClasses = ['status-recibido','status-proceso','status-confeccion','status-enviado','status-entregado'];
 
   trackingList.innerHTML = orders.map(order => {
-    const orderDate = new Date(order.date);
+    const orderDate = new Date(order.created_at || order.date);
     const formattedDate = orderDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
-    const currentStep = order.statusStep || 0;
-    const estDelivery = new Date(orderDate.getTime() + order.estimatedDays * 86400000);
+    const statusInfo = statusMap[order.status] || statusMap['pendiente'];
+    const currentStep = statusInfo.step;
+    const estDelivery = new Date(orderDate.getTime() + 14 * 86400000);
     const formattedEst = estDelivery.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const products = order.products || [];
+    const productNames = products.map(p => p.name).join(', ');
+    const productQty = order.products.reduce((sum, p) => sum + p.qty, 0);
+    const productSize = order.products[0]?.size || 'N/A';
 
     const timelineHTML = statuses.map((status, i) => {
       let stepClass = i < currentStep ? 'completed' : i === currentStep ? 'current' : '';
@@ -500,10 +688,10 @@ function initOrderTracking() {
     }).join('');
 
     return `<div class="tracking-card fade-in">
-      <div class="tracking-card-header"><div><h3>${order.product}</h3><span class="tracking-order-id">#${order.id}</span></div><span class="tracking-status-badge ${statusClasses[currentStep]}">${statuses[currentStep].label}</span></div>
+      <div class="tracking-card-header"><div><h3>${productNames}</h3><span class="tracking-order-id">#${order.id}</span></div><span class="tracking-status-badge ${statusClasses[currentStep]}">${statusInfo.label}</span></div>
       <div class="tracking-timeline">${timelineHTML}</div>
-      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:0.8rem;color:var(--text-medium);"><span><i class="bi bi-box"></i> Talla: ${order.size} · Cant: ${order.qty}</span><span><i class="bi bi-credit-card"></i> Pago: ${order.payment}</span><span><i class="bi bi-calendar"></i> Pedido: ${formattedDate}</span></div>
-      <div class="tracking-estimate"><i class="bi bi-clock"></i> Entrega estimada: <strong>${formattedEst}</strong> (${order.estimatedDays} días hábiles)</div>
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:0.8rem;color:var(--text-medium);"><span><i class="bi bi-box"></i> Talla: ${productSize} · Cant: ${productQty}</span><span><i class="bi bi-credit-card"></i> Pago: ${order.payment}</span><span><i class="bi bi-calendar"></i> Pedido: ${formattedDate}</span></div>
+      <div class="tracking-estimate"><i class="bi bi-clock"></i> Entrega estimada: <strong>${formattedEst}</strong> (14 días hábiles)</div>
     </div>`;
   }).join('');
 }

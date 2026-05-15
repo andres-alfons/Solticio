@@ -1,0 +1,736 @@
+/* ============================================
+   CHATBOT - VALENTINA NIEBLES
+   Premium Fashion Assistant Widget
+   ============================================ */
+
+:root {
+  --vn-gold: #c9a96e;
+  --vn-gold-dark: #a07d3f;
+  --vn-gold-light: #e8d5a8;
+  --vn-black: #1a1a1a;
+  --vn-dark: #2d2d2d;
+  --vn-gray: #6b6b6b;
+  --vn-light-gray: #f5f3f0;
+  --vn-white: #ffffff;
+  --vn-rose: #f8e8e0;
+  --vn-rose-dark: #d4a99a;
+  --vn-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  --vn-shadow-sm: 0 4px 20px rgba(0,0,0,0.1);
+  --vn-radius: 16px;
+  --vn-radius-sm: 10px;
+  --vn-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toggle Button */
+.vn-chat-toggle {
+  position: fixed;
+  bottom: 6.5rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(201, 169, 110, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--vn-transition);
+  z-index: 10001;
+}
+
+.vn-chat-toggle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 28px rgba(201, 169, 110, 0.55);
+}
+
+.vn-chat-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.vn-chat-toggle-icon svg {
+  width: 28px;
+  height: 28px;
+  transition: var(--vn-transition);
+}
+
+.vn-icon-close {
+  display: none;
+}
+
+.vn-chatbot-open .vn-icon-open {
+  display: none;
+}
+
+.vn-chatbot-open .vn-icon-close {
+  display: block;
+}
+
+.vn-notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #e74c3c;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 2px solid white;
+  animation: vn-pulse 2s infinite;
+}
+
+@keyframes vn-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Chat Panel */
+.vn-chat-panel {
+  position: fixed;
+  bottom: 6.5rem;
+  right: 2rem;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 560px;
+  max-height: calc(100vh - 140px);
+  background: var(--vn-white);
+  border-radius: var(--vn-radius);
+  box-shadow: var(--vn-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: var(--vn-transition);
+  z-index: 10001;
+}
+
+.vn-chatbot-open .vn-chat-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Header */
+.vn-chat-header {
+  background: linear-gradient(135deg, var(--vn-black) 0%, var(--vn-dark) 100%);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.vn-chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vn-chat-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.vn-chat-avatar svg {
+  width: 44px;
+  height: 44px;
+}
+
+.vn-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #2ecc71;
+  border-radius: 50%;
+  border: 2px solid var(--vn-black);
+}
+
+.vn-chat-title {
+  color: var(--vn-white);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.vn-chat-status {
+  color: var(--vn-gold-light);
+  font-size: 12px;
+  margin: 0;
+  margin-top: 2px;
+}
+
+.vn-chat-minimize {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--vn-transition);
+  color: var(--vn-white);
+}
+
+.vn-chat-minimize:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.vn-chat-minimize svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Messages Area */
+.vn-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: linear-gradient(180deg, var(--vn-light-gray) 0%, var(--vn-white) 100%);
+  scroll-behavior: smooth;
+}
+
+.vn-chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.vn-chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vn-chat-messages::-webkit-scrollbar-thumb {
+  background: var(--vn-gold-light);
+  border-radius: 3px;
+}
+
+/* Message Bubbles */
+.vn-message {
+  display: flex;
+  margin-bottom: 16px;
+  animation: vn-message-in 0.3s ease-out;
+}
+
+@keyframes vn-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vn-message-bot {
+  justify-content: flex-start;
+}
+
+.vn-message-user {
+  justify-content: flex-end;
+}
+
+.vn-message-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: var(--vn-radius-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.vn-message-bot .vn-message-bubble {
+  background: var(--vn-white);
+  color: var(--vn-dark);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--vn-shadow-sm);
+}
+
+.vn-message-user .vn-message-bubble {
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  color: var(--vn-white);
+  border-bottom-right-radius: 4px;
+}
+
+.vn-message-time {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 6px;
+  display: block;
+}
+
+.vn-message-user .vn-message-time {
+  text-align: right;
+}
+
+/* Typing Indicator */
+.vn-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 18px;
+  background: var(--vn-white);
+  border-radius: var(--vn-radius-sm);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--vn-shadow-sm);
+  width: fit-content;
+}
+
+.vn-typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--vn-gold);
+  border-radius: 50%;
+  animation: vn-typing-bounce 1.4s infinite;
+}
+
+.vn-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.vn-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes vn-typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* Quick Replies */
+.vn-chat-quick-replies {
+  padding: 12px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid rgba(201, 169, 110, 0.2);
+  background: var(--vn-white);
+  flex-shrink: 0;
+}
+
+.vn-quick-reply {
+  background: transparent;
+  border: 1px solid var(--vn-gold);
+  color: var(--vn-gold-dark);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--vn-transition);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.vn-quick-reply:hover {
+  background: var(--vn-gold);
+  color: var(--vn-white);
+}
+
+/* Input Area */
+.vn-chat-input-area {
+  padding: 16px 20px;
+  background: var(--vn-white);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.vn-chat-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--vn-light-gray);
+  border-radius: 25px;
+  padding: 6px 6px 6px 18px;
+}
+
+.vn-chat-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--vn-dark);
+  outline: none;
+  font-family: inherit;
+}
+
+.vn-chat-input::placeholder {
+  color: var(--vn-gray);
+}
+
+.vn-chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--vn-transition);
+  flex-shrink: 0;
+}
+
+.vn-chat-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(201, 169, 110, 0.4);
+}
+
+.vn-chat-send-btn svg {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+.vn-chat-footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--vn-gray);
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Product Card in Chat */
+.vn-product-card {
+  background: var(--vn-white);
+  border-radius: var(--vn-radius-sm);
+  overflow: hidden;
+  box-shadow: var(--vn-shadow-sm);
+  margin-top: 10px;
+  max-width: 250px;
+}
+
+.vn-product-card-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: var(--vn-light-gray);
+}
+
+.vn-product-card-body {
+  padding: 12px;
+}
+
+.vn-product-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vn-dark);
+  margin: 0 0 4px;
+}
+
+.vn-product-card-price {
+  font-size: 15px;
+  color: var(--vn-gold-dark);
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.vn-product-card-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--vn-transition);
+  text-align: center;
+  text-decoration: none;
+}
+
+.vn-product-card-btn:hover {
+  opacity: 0.9;
+}
+
+/* Schedule Card */
+.vn-schedule-card {
+  background: var(--vn-white);
+  border-radius: var(--vn-radius-sm);
+  padding: 14px;
+  box-shadow: var(--vn-shadow-sm);
+  margin-top: 10px;
+}
+
+.vn-schedule-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vn-dark);
+  margin: 0 0 10px;
+}
+
+.vn-schedule-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vn-schedule-slot {
+  padding: 6px 12px;
+  border: 1px solid var(--vn-gold);
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--vn-gold-dark);
+  cursor: pointer;
+  transition: var(--vn-transition);
+}
+
+.vn-schedule-slot:hover {
+  background: var(--vn-gold);
+  color: white;
+}
+
+/* Order Status */
+.vn-order-status {
+  background: var(--vn-white);
+  border-radius: var(--vn-radius-sm);
+  padding: 14px;
+  box-shadow: var(--vn-shadow-sm);
+  margin-top: 10px;
+}
+
+.vn-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.vn-order-id {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vn-dark);
+}
+
+.vn-order-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vn-order-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.vn-order-badge.processing {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.vn-order-badge.shipped {
+  background: #d4edda;
+  color: #155724;
+}
+
+.vn-order-badge.delivered {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.vn-order-progress {
+  height: 4px;
+  background: var(--vn-light-gray);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.vn-order-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--vn-gold), var(--vn-gold-dark));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Discount Card */
+.vn-discount-card {
+  background: linear-gradient(135deg, var(--vn-rose), var(--vn-white));
+  border: 1px solid var(--vn-rose-dark);
+  border-radius: var(--vn-radius-sm);
+  padding: 14px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.vn-discount-code {
+  display: inline-block;
+  background: var(--vn-gold);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+/* Welcome Message Special */
+.vn-welcome-message {
+  text-align: center;
+  padding: 10px 0 20px;
+}
+
+.vn-welcome-logo {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  color: var(--vn-gold-dark);
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.vn-welcome-text {
+  font-size: 13px;
+  color: var(--vn-gray);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .vn-chat-panel {
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .vn-chat-toggle {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Proactive Message Toast */
+.vn-proactive-toast {
+  position: fixed;
+  bottom: 13rem;
+  right: 2rem;
+  width: 280px;
+  max-width: calc(100vw - 56px);
+  background: var(--vn-white);
+  border-radius: var(--vn-radius);
+  box-shadow: var(--vn-shadow);
+  z-index: 10001;
+  overflow: hidden;
+  animation: vn-proactive-in 0.4s ease-out;
+  border: 1px solid rgba(201, 169, 110, 0.2);
+}
+
+@keyframes vn-proactive-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.vn-proactive-toast.hiding {
+  animation: vn-proactive-out 0.3s ease-in forwards;
+}
+
+@keyframes vn-proactive-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(20px) scale(0.95); }
+}
+
+.vn-proactive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--vn-black), var(--vn-dark));
+}
+
+.vn-proactive-sender {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vn-proactive-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: Georgia, serif;
+}
+
+.vn-proactive-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vn-white);
+}
+
+.vn-proactive-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: var(--vn-transition);
+}
+
+.vn-proactive-close:hover { color: var(--vn-white); }
+.vn-proactive-close svg { width: 14px; height: 14px; }
+
+.vn-proactive-body {
+  padding: 14px;
+}
+
+.vn-proactive-text {
+  font-size: 13px;
+  color: var(--vn-dark);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.vn-proactive-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, var(--vn-gold), var(--vn-gold-dark));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--vn-transition);
+  font-family: inherit;
+}
+
+.vn-proactive-btn:hover { opacity: 0.9; }
+
+@media (max-width: 480px) {
+  .vn-proactive-toast {
+    bottom: 5rem;
+    right: 1rem;
+    width: calc(100vw - 2rem);
+  }
+}
+

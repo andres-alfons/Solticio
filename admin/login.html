@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Valentina Niebles</title>
+  <link rel="stylesheet" href="../css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase.js"></script>
+</head>
+<body>
+  <div class="admin-login">
+    <div class="admin-login-card">
+      <div class="admin-login-logo">
+        <h1>VALENTINA NIEBLES</h1>
+        <p>Panel Administrativo</p>
+      </div>
+      <div id="loginError" class="admin-login-error"></div>
+      <form id="loginForm" class="admin-login-form">
+        <div class="admin-form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="admin@niebles.com" autocomplete="email" required>
+        </div>
+        <div class="admin-form-group">
+          <label>Contraseña</label>
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary admin-btn-lg admin-btn-full" id="loginBtn">
+          Ingresar al Panel
+        </button>
+      </form>
+      <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--admin-text-muted);">
+        Acceso restringido · Solo personal autorizado
+      </p>
+    </div>
+  </div>
+
+  <script>
+    let failedAttempts = 0;
+    const MAX_ATTEMPTS = 5;
+    let lockoutUntil = null;
+
+    async function checkSupabaseReady() {
+      if (!isSupabaseConfigured()) {
+        showError('Supabase no configurado. Contacta al administrador.');
+        return false;
+      }
+      return true;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (lockoutUntil && Date.now() < lockoutUntil) {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        showError(`Demasiados intentos. Espera ${remaining}s`);
+        return;
+      }
+
+      if (!await checkSupabaseReady()) return;
+
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('loginPass').value;
+      const btn = document.getElementById('loginBtn');
+
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      try {
+        const supabase = getSupabase();
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password: pass
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, name')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profileError || !profile) {
+            throw new Error('Perfil no encontrado');
+          }
+
+          if (!['admin', 'manager'].includes(profile.role)) {
+            await supabase.auth.signOut();
+            throw new Error('No tienes permisos de administrador');
+          }
+
+          failedAttempts = 0;
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        failedAttempts++;
+
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          lockoutUntil = Date.now() + 30000;
+          showError('Cuenta bloqueada temporalmente (30s)');
+          setTimeout(() => { lockoutUntil = null; failedAttempts = 0; }, 30000);
+        } else {
+          const msg = err.message || 'Error al iniciar sesión';
+          if (msg.includes('Invalid login credentials')) {
+            showError(`Email o contraseña incorrectos (${MAX_ATTEMPTS - failedAttempts} intentos restantes)`);
+          } else {
+            showError(msg + ` (${MAX_ATTEMPTS - failedAttempts} intentos restantes)`);
+          }
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ingresar al Panel';
+      }
+    });
+
+    function showError(msg) {
+      const el = document.getElementById('loginError');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    // Check existing session
+    (async function() {
+      if (!isSupabaseConfigured()) return;
+
+      const supabase = getSupabase();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile && ['admin', 'manager'].includes(profile.role)) {
+          window.location.href = 'index.html';
+        } else {
+          await supabase.auth.signOut();
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
