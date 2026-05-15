@@ -26,7 +26,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/admin", "destination": "/admin/login" },
-    { "source": "/account", "destination": "/account/index" }
+    { "source": "/favicon.ico", "destination": "/img/favicon.svg" },
+    { "source": "/admin", "destination": "/admin/login.html" },
+    { "source": "/account", "destination": "/account/index.html" }
   ]
 }
