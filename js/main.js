@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initOrderTracking();
   initProductPage();
   initChatbot();
+  initNotifications();
   updateAuthUI();
 });
 
@@ -557,21 +558,43 @@ function initChatbot() {
 }
 
 async function initNotifications() {
-  const user = Auth.getCurrentUser();
-  if (!user) return;
-
   const notifBell = document.getElementById('notifBell');
+  const notifBadge = document.getElementById('notifBadge');
   if (!notifBell) return;
 
-  const unreadCount = await DataStore.getUnreadCount(user.id);
-
-  if (unreadCount > 0) {
-    notifBell.innerHTML = `<i class="bi bi-bell-fill"></i><span class="notif-badge">${unreadCount > 9 ? '9+' : unreadCount}</span>`;
-  } else {
-    notifBell.innerHTML = `<i class="bi bi-bell"></i>`;
+  async function updateBadge() {
+    const user = Auth.getCurrentUser();
+    if (!user) {
+      if (notifBadge) notifBadge.style.display = 'none';
+      return;
+    }
+    const count = await DataStore.getUnreadCount(user.id);
+    if (notifBadge) {
+      if (count > 0) {
+        notifBadge.textContent = count > 9 ? '9+' : count;
+        notifBadge.style.display = 'flex';
+      } else {
+        notifBadge.style.display = 'none';
+      }
+    }
   }
 
+  await new Promise(resolve => {
+    if (Auth.isLoggedIn()) return resolve();
+    window.addEventListener('auth:change', resolve, { once: true });
+    setTimeout(resolve, 3000);
+  });
+
+  updateBadge();
+
+  window.addEventListener('auth:change', () => updateBadge());
+
   notifBell.addEventListener('click', () => {
+    const user = Auth.getCurrentUser();
+    if (!user) {
+      window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
     showNotificationsDropdown(user);
   });
 }
