@@ -180,38 +180,19 @@ const Auth = (function() {
         return;
       }
 
-      if (typeof google === 'undefined' || !google.accounts) {
-        showToast('Google no disponible', 'El SDK de Google no se cargó correctamente', 'warning');
-        return;
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + '/account/index.html'
+          }
+        });
+
+        if (error) throw error;
+      } catch (err) {
+        console.error('Google sign-in error:', err);
+        showToast('Error', err.message || 'No se pudo conectar con Google', 'error');
       }
-
-      google.accounts.oauth2.initTokenClient({
-        client_id: '516018669609-mgm6bc93u5pnq2qma4mbu946ne3bethd.apps.googleusercontent.com',
-        scope: 'email profile',
-        callback: async (response) => {
-          if (response.error) {
-            showToast('Error', 'No se pudo conectar con Google', 'error');
-            return;
-          }
-
-          try {
-            const { data, error } = await supabase.auth.signInWithIdToken({
-              provider: 'google',
-              token: response.access_token
-            });
-
-            if (error) throw error;
-
-            if (data.user) {
-              await loadUserProfile(data.user);
-              showToast('Bienvenida', 'Inicio de sesión exitoso con Google');
-            }
-          } catch (err) {
-            console.error('Google sign-in error:', err);
-            showToast('Error', err.message || 'No se pudo conectar con Google', 'error');
-          }
-        }
-      }).requestAccessToken();
     },
 
     async signOut() {
