@@ -47,6 +47,8 @@ const Auth = (function() {
 
       if (error) throw error;
 
+      const isFirstLogin = currentUser === null;
+
       currentUser = {
         id: profile.id,
         name: profile.name,
@@ -59,13 +61,14 @@ const Auth = (function() {
 
       localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
 
-      // Update last login
       await supabase
         .from('profiles')
         .update({ last_login: new Date().toISOString() })
         .eq('id', profile.id);
 
-      window.dispatchEvent(new CustomEvent('auth:change', { detail: { user: currentUser } }));
+      window.dispatchEvent(new CustomEvent('auth:change', {
+        detail: { user: currentUser, isFirstLogin }
+      }));
     } catch (err) {
       console.error('Error loading profile:', err);
     }

@@ -1269,7 +1269,7 @@ img {
 .login-user {
   display: none;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .login-user.active {
@@ -1277,8 +1277,8 @@ img {
 }
 
 .login-avatar {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 1.5px solid var(--gold);
   object-fit: cover;
@@ -1287,11 +1287,11 @@ img {
 
 .login-name {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 500;
   color: var(--banana);
   white-space: nowrap;
-  max-width: 100px;
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1302,31 +1302,36 @@ img {
 
 .logout-btn {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.6rem;
-  color: rgba(255,255,255,0.55);
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.5);
   cursor: pointer;
-  background: none;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 4px;
-  padding: 0.2rem 0.5rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 3px;
+  padding: 0.15rem 0.45rem;
   transition: all var(--transition);
   white-space: nowrap;
   line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .logout-btn:hover {
-  color: var(--gold);
-  border-color: var(--gold);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .navbar.scrolled .logout-btn {
   color: var(--text-light);
-  border-color: rgba(0,0,0,0.15);
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.04);
 }
 
 .navbar.scrolled .logout-btn:hover {
-  color: var(--burgundy);
-  border-color: var(--burgundy);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
 }
 
 /* ======================== NOTIFICATION BELL ======================== */

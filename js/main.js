@@ -430,7 +430,8 @@ function updateAuthUI() {
 
     loginBtn.style.display = 'none';
     userDisplay.classList.add('active');
-    userDisplay.querySelector('.login-name').textContent = user.name;
+    const firstName = user.name.split(' ')[0];
+    userDisplay.querySelector('.login-name').textContent = firstName;
     const avatar = userDisplay.querySelector('.login-avatar');
     if (avatar) {
       avatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=632432&color=F2E5A1&size=56`;
@@ -442,21 +443,22 @@ function updateAuthUI() {
 
   window.addEventListener('auth:change', (e) => {
     renderNav(e.detail.user);
-    if (e.detail.user) {
-      showWelcomeOverlay(e.detail.user.name);
+    if (e.detail.user && e.detail.isFirstLogin) {
+      showWelcomeOverlay(e.detail.user.name.split(' ')[0]);
     }
   });
 
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
       Auth.signOut();
-      window.location.reload();
+      setTimeout(() => window.location.href = 'index.html', 300);
     });
   }
 }
 
-function showWelcomeOverlay(name) {
+function showWelcomeOverlay(firstName) {
   const existing = document.querySelector('.welcome-overlay');
   if (existing) existing.remove();
 
@@ -465,7 +467,7 @@ function showWelcomeOverlay(name) {
   overlay.innerHTML = `
     <div class="welcome-content">
       <div class="welcome-icon">✨</div>
-      <h2>¡Bienvenida, ${name.split(' ')[0]}!</h2>
+      <h2>¡Bienvenida, ${firstName}!</h2>
       <p>Tu sesión ha sido iniciada correctamente</p>
     </div>
   `;
