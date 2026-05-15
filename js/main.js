@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initOrderTracking();
   initProductPage();
   initChatbot();
-  initNotifications();
   updateAuthUI();
 });
 

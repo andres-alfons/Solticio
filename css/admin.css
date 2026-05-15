@@ -3,6 +3,31 @@
    Premium Fashion Admin Panel
    ============================================ */
 
+.admin-login-back {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.admin-login-back:hover {
+  color: rgba(255,255,255,0.8);
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+}
+
 :root {
   --admin-bg: #0f1117;
   --admin-bg-secondary: #161822;

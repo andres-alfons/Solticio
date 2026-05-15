@@ -59,10 +59,10 @@
       <p style="max-width:500px;margin:0 auto;color:var(--text-light);">Cada pedido es una obra de arte en proceso. Aquí puedes ver cómo avanza tu diseño personalizado.</p>
     </div>
 
-    <div class="tracking-list" id="trackingList">
+    <div id="pedidosContent">
       <div style="text-align:center;padding:3rem;color:var(--text-light);">
         <i class="bi bi-hourglass-split" style="font-size:3rem;display:block;margin-bottom:1rem;color:var(--banana);"></i>
-        <p>Cargando tus pedidos...</p>
+        <p>Cargando...</p>
       </div>
     </div>
 
@@ -105,17 +105,98 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 Valentina Niebles. Todos los derechos reservados. Hecho con amor.</p>
-      <p style="margin-top:8px;"><a href="admin/login.html" style="color:rgba(255,255,255,0.3);font-size:11px;text-decoration:none;">Admin</a></p>
     </div>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
-<script src="js/data-store.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/notifications.js"></script>
+<script src="js/data-store.js"></script>
 <script src="js/main.js"></script>
+<script>
+  (async function() {
+    function waitForAuth() {
+      return new Promise((resolve) => {
+        if (Auth.isLoggedIn()) return resolve(true);
+        const handler = (e) => {
+          if (e.detail && e.detail.user) resolve(true);
+          else resolve(false);
+        };
+        window.addEventListener('auth:change', handler, { once: true });
+        setTimeout(() => resolve(Auth.isLoggedIn()), 3000);
+      });
+    }
+
+    const authenticated = await waitForAuth();
+    const container = document.getElementById('pedidosContent');
+
+    if (!authenticated || !Auth.getCurrentUser()) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:4rem 2rem;">
+          <i class="bi bi-person-lock" style="font-size:4rem;display:block;margin-bottom:1.5rem;color:var(--banana);"></i>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;margin-bottom:0.8rem;color:var(--banana);">Inicia Sesión</h3>
+          <p style="color:var(--text-light);margin-bottom:2rem;max-width:400px;margin-left:auto;margin-right:auto;">Para ver tus pedidos necesitas iniciar sesión en tu cuenta.</p>
+          <a href="auth/login.html?redirect=${encodeURIComponent(window.location.pathname)}" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión</a>
+        </div>`;
+      return;
+    }
+
+    const user = Auth.getCurrentUser();
+    const orders = await DataStore.getOrders({ userId: user.id });
+    const sortedOrders = orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (sortedOrders.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:4rem 2rem;">
+          <i class="bi bi-bag-x" style="font-size:4rem;display:block;margin-bottom:1.5rem;color:var(--banana);"></i>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;margin-bottom:0.8rem;color:var(--banana);">No tienes pedidos aún</h3>
+          <p style="color:var(--text-light);margin-bottom:2rem;max-width:400px;margin-left:auto;margin-right:auto;">Explora nuestra colección y encuentra tu prenda ideal.</p>
+          <a href="coleccion.html" class="btn btn-primary"><i class="bi bi-grid"></i> Ver Colección</a>
+        </div>`;
+      return;
+    }
+
+    const statusSteps = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado'];
+    const statusLabels = ['Recibido', 'Confirmado', 'En Confección', 'Enviado', 'Entregado'];
+    const statusIcons = ['📋', '✅', '✂️', '📦', '🏠'];
+    const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
+
+    container.innerHTML = `<div class="tracking-list">${sortedOrders.map(order => {
+      const currentIdx = statusSteps.indexOf(order.status);
+      let progress = '<div class="tracking-timeline">';
+      statusSteps.forEach((step, i) => {
+        let cls = '';
+        if (i < currentIdx) cls = 'completed';
+        else if (i === currentIdx) cls = 'current';
+        progress += `<div class="timeline-step ${cls}"><div class="timeline-dot"><i class="bi ${statusIcons[i] === '📋' ? 'bi-inbox' : statusIcons[i] === '✅' ? 'bi-check-circle' : statusIcons[i] === '✂️' ? 'bi-scissors' : statusIcons[i] === '📦' ? 'bi-truck' : 'bi-box-seam'}"></i></div><span class="timeline-label">${statusLabels[i]}</span></div>`;
+      });
+      progress += '</div>';
+
+      const orderDate = new Date(order.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+      const products = order.products || [];
+      const estDelivery = new Date(new Date(order.created_at).getTime() + 14 * 86400000).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      return `
+        <div class="tracking-card fade-in">
+          <div class="tracking-card-header">
+            <div>
+              <h3>${products.map(p => p.name).join(', ')}</h3>
+              <span class="tracking-order-id">#${order.id}</span>
+            </div>
+            <span class="tracking-status-badge">${order.status.replace('_', ' ')}</span>
+          </div>
+          ${progress}
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:0.8rem;color:var(--text-medium);">
+            <span><i class="bi bi-box"></i> Talla: ${products[0]?.size || 'N/A'} · Cant: ${products.reduce((s, p) => s + (p.qty || 1), 0)}</span>
+            <span><i class="bi bi-credit-card"></i> Pago: ${order.payment}</span>
+            <span><i class="bi bi-calendar"></i> Pedido: ${orderDate}</span>
+          </div>
+          <div class="tracking-estimate"><i class="bi bi-clock"></i> Entrega estimada: <strong>${estDelivery}</strong> (14 días hábiles)</div>
+        </div>`;
+    }).join('')}</div>`;
+  })();
+</script>
 <div id="vn-chatbot" class="vn-chatbot-closed">
   <button id="vn-chat-toggle" class="vn-chat-toggle" aria-label="Abrir asistente virtual">
     <span class="vn-chat-toggle-icon">
