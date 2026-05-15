@@ -415,20 +415,20 @@ function removeExistingModal() {
 }
 
 function updateAuthUI() {
-  const loginBtn = document.getElementById('googleLoginBtn');
+  const loginBtn = document.querySelector('.nav-login-btn');
   const userDisplay = document.getElementById('userDisplay');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  if (!loginBtn || !userDisplay) return;
+  if (!userDisplay) return;
 
   function renderNav(user) {
     if (!user) {
-      loginBtn.style.display = '';
+      if (loginBtn) loginBtn.style.display = '';
       userDisplay.classList.remove('active');
       return;
     }
 
-    loginBtn.style.display = 'none';
+    if (loginBtn) loginBtn.style.display = 'none';
     userDisplay.classList.add('active');
     const firstName = user.name.split(' ')[0];
     userDisplay.querySelector('.login-name').textContent = firstName;
@@ -443,7 +443,7 @@ function updateAuthUI() {
 
   window.addEventListener('auth:change', (e) => {
     renderNav(e.detail.user);
-    if (e.detail.user && e.detail.isFirstLogin) {
+    if (e.detail.user && e.detail.justLoggedIn) {
       showWelcomeOverlay(e.detail.user.name.split(' ')[0]);
     }
   });
@@ -456,6 +456,76 @@ function updateAuthUI() {
       setTimeout(() => window.location.href = 'index.html', 300);
     });
   }
+
+  userDisplay.addEventListener('click', (e) => {
+    if (e.target === logoutBtn || logoutBtn.contains(e.target)) return;
+    toggleUserDropdown();
+  });
+
+  userDisplay.querySelector('.login-avatar').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleUserDropdown();
+  });
+
+  userDisplay.querySelector('.login-name').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleUserDropdown();
+  });
+}
+
+function toggleUserDropdown() {
+  const existing = document.getElementById('userDropdown');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const user = Auth.getCurrentUser();
+  if (!user) return;
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'userDropdown';
+  dropdown.className = 'user-dropdown';
+  dropdown.innerHTML = `
+    <div class="user-dropdown-header">
+      <img src="${user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=632432&color=F2E5A1&size=56`}" alt="">
+      <div>
+        <span class="user-dropdown-name">${user.name}</span>
+        <span class="user-dropdown-email">${user.email}</span>
+      </div>
+    </div>
+    <div class="user-dropdown-menu">
+      <a href="account/index.html"><i class="bi bi-person"></i> Mi Cuenta</a>
+      <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
+      <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
+      <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
+      ${user.role === 'admin' || user.role === 'manager' ? `<a href="admin/index.html"><i class="bi bi-shield-check"></i> Panel Admin</a>` : ''}
+    </div>
+    <div class="user-dropdown-footer">
+      <button id="dropdownLogout"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+    </div>
+  `;
+
+  document.querySelector('.nav-login').appendChild(dropdown);
+  requestAnimationFrame(() => dropdown.classList.add('active'));
+
+  document.getElementById('dropdownLogout').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropdown.remove();
+    Auth.signOut();
+    setTimeout(() => window.location.href = 'index.html', 300);
+  });
+
+  setTimeout(() => {
+    document.addEventListener('click', function closeDropdown(ev) {
+      if (!dropdown.contains(ev.target) && !ev.target.closest('.login-user')) {
+        dropdown.classList.remove('active');
+        setTimeout(() => dropdown.remove(), 200);
+      }
+      document.removeEventListener('click', closeDropdown);
+    });
+  }, 10);
 }
 
 function showWelcomeOverlay(firstName) {

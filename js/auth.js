@@ -47,7 +47,7 @@ const Auth = (function() {
 
       if (error) throw error;
 
-      const isFirstLogin = currentUser === null;
+      const wasLoggedIn = currentUser !== null;
 
       currentUser = {
         id: profile.id,
@@ -66,8 +66,13 @@ const Auth = (function() {
         .update({ last_login: new Date().toISOString() })
         .eq('id', profile.id);
 
+      const justLoggedIn = !wasLoggedIn && localStorage.getItem('vn_just_logged_in') === 'true';
+      if (justLoggedIn) {
+        localStorage.removeItem('vn_just_logged_in');
+      }
+
       window.dispatchEvent(new CustomEvent('auth:change', {
-        detail: { user: currentUser, isFirstLogin }
+        detail: { user: currentUser, justLoggedIn }
       }));
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -97,6 +102,7 @@ const Auth = (function() {
         if (error) throw error;
 
         if (data.user) {
+          localStorage.setItem('vn_just_logged_in', 'true');
           await loadUserProfile(data.user);
           return { success: true };
         }
@@ -182,6 +188,8 @@ const Auth = (function() {
         showToast('Google no configurado', 'Supabase no está configurado', 'warning');
         return;
       }
+
+      localStorage.setItem('vn_just_logged_in', 'true');
 
       try {
         const { error } = await supabase.auth.signInWithOAuth({
