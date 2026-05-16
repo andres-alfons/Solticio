@@ -74,6 +74,10 @@
       try {
         const supabase = getSupabase();
 
+        // Force sign out any existing session before signing in
+        // This prevents stale sessions from previous users
+        await supabase.auth.signOut({ scope: 'global' });
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password: pass
@@ -148,6 +152,18 @@
           await supabase.auth.signOut();
         }
       }
+    })();
+
+    // Listen for auth state changes to handle stale sessions
+    (async function() {
+      if (!isSupabaseConfigured()) return;
+      const supabase = getSupabase();
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+          document.getElementById('loginEmail').value = '';
+          document.getElementById('loginPass').value = '';
+        }
+      });
     })();
   </script>
 </body>

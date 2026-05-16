@@ -21,8 +21,21 @@
 
     supabase = getSupabase();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Force refresh the session to get the latest user data
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.warn('No active session:', sessionError?.message);
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return false;
+    }
+
+    // Verify the session is fresh by checking the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.warn('Invalid user:', userError?.message);
+      await supabase.auth.signOut();
       window.location.href = 'login.html';
       return false;
     }
@@ -30,10 +43,12 @@
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     if (error || !profile || !['admin', 'manager'].includes(profile.role)) {
+      console.warn('Not authorized:', error?.message, profile?.role);
+      await supabase.auth.signOut();
       window.location.href = 'login.html';
       return false;
     }
@@ -325,10 +340,14 @@
   // ============================================
   function renderDashboard() {
     const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0);
-    document.getElementById('statRevenue').textContent = '$' + (totalRevenue / 1000000).toFixed(1) + 'M';
-    document.getElementById('statOrders').textContent = orders.length;
-    document.getElementById('statClients').textContent = clients.length;
-    document.getElementById('statAppointments').textContent = appointments.filter(a => a.status !== 'cancelada').length;
+    const el1 = document.getElementById('statRevenue');
+    if (el1) el1.textContent = '$' + (totalRevenue / 1000000).toFixed(1) + 'M';
+    const el2 = document.getElementById('statOrders');
+    if (el2) el2.textContent = orders.length;
+    const el3 = document.getElementById('statClients');
+    if (el3) el3.textContent = clients.length;
+    const el4 = document.getElementById('statAppointments');
+    if (el4) el4.textContent = appointments.filter(a => a.status !== 'cancelada').length;
 
     const tbody = document.getElementById('recentOrdersBody');
     if (tbody) {
@@ -357,6 +376,12 @@
 
     renderSalesChart();
     renderCategoryChart();
+
+    // Re-render charts after a short delay to ensure layout is computed
+    setTimeout(() => {
+      renderSalesChart();
+      renderCategoryChart();
+    }, 300);
   }
 
   function statusBadge(status) {
@@ -565,7 +590,7 @@
           </div>
         </td>
         <td>${p.category}</td>
-        <td>$${Number(p.price).toLocaleString('es-CO')}${p.discount ? ` <span style="color:var(--admin-green);font-size:11px;">-${p.discount}%</span>` : ''}</td>
+        <td>$${Number(p.price).toLocaleString('es-CO')}${p.discount ? ' <span style="color:var(--admin-green);font-size:11px;">-' + p.discount + '%</span>' : ''}</td>
         <td><span style="color:${p.stock <= p.min_stock ? 'var(--admin-red)' : 'var(--admin-text)'}">${p.stock}</span></td>
         <td>${statusBadge(p.status)}</td>
         <td>
@@ -576,7 +601,8 @@
           </div>
         </td>
       </tr>
-    `).join('');
+      `;
+    }).join('');
   }
 
   window.filterProducts = function(filter, btn) {
@@ -1683,7 +1709,7 @@
   window.toggleUserMenu = function() {};
 
   window.logout = async function() {
-    if (supabase) await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut({ scope: 'global' });
     window.location.href = 'login.html';
   };
 
@@ -1708,41 +1734,51 @@
   // INIT
   // ============================================
   async function init() {
-    const authenticated = await checkAuth();
-    if (!authenticated) return;
+    try {
+      const authenticated = await checkAuth();
+      if (!authenticated) return;
 
-    await loadAllData();
-    updateBadges();
-    renderDashboard();
-    renderNotifications();
+      await loadAllData();
+      updateBadges();
+      renderDashboard();
+      renderNotifications();
 
-    const checkWidth = () => {
-      const menuBtn = document.getElementById('menuBtn');
-      if (window.innerWidth <= 768) {
-        menuBtn.style.display = 'flex';
-      } else {
-        menuBtn.style.display = 'none';
-        document.getElementById('sidebar').classList.remove('open');
-      }
-    };
-    checkWidth();
-    window.addEventListener('resize', checkWidth);
-
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        const activePage = document.querySelector('.admin-page.active');
-        if (activePage) {
-          const page = activePage.id.replace('page-', '');
-          if (page === 'dashboard') renderDashboard();
-          if (page === 'stats') renderStats();
+      const checkWidth = () => {
+        const menuBtn = document.getElementById('menuBtn');
+        if (window.innerWidth <= 768) {
+          menuBtn.style.display = 'flex';
+        } else {
+          menuBtn.style.display = 'none';
+          document.getElementById('sidebar').classList.remove('open');
         }
-      }, 250);
-    });
+      };
+      checkWidth();
+      window.addEventListener('resize', checkWidth);
+
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          const activePage = document.querySelector('.admin-page.active');
+          if (activePage) {
+            const page = activePage.id.replace('page-', '');
+            if (page === 'dashboard') renderDashboard();
+            if (page === 'stats') renderStats();
+          }
+        }, 250);
+      });
+    } catch (err) {
+      console.error('Admin init error:', err);
+      window.location.href = 'login.html';
+    }
   }
 
-  init();
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
   window.AdminPanel = {
     getData: () => ({ products, orders, clients, appointments, invoices, productImages, notifications, activities }),
