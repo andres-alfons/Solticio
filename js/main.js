@@ -315,7 +315,7 @@ function openPaymentModal(product) {
           <p>Tu pedido ha sido registrado exitosamente.</p>
           <span class="order-id" id="orderIdDisplay"></span>
           <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:1rem;">Te enviaremos actualizaciones a tu correo.</p>
-          <a href="pedidos.html" class="btn btn-primary"><i class="bi bi-truck"></i> Ver Mis Pedidos</a>
+          <a href="account/mis-pedidos.html" class="btn btn-primary"><i class="bi bi-truck"></i> Ver Mis Pedidos</a>
         </div>
       </div>
     </div>
