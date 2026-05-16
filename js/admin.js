@@ -806,7 +806,13 @@
 
     await insertActivity('blue', `Pedido ${id} → ${status.replace('_', ' ')}${reason ? ' (' + reason + ')' : ''}`);
 
-    callStatusUpdateAPI(id, status, reason, detail).catch(e => console.warn('API status update:', e));
+    const apiResult = await callStatusUpdateAPI(id, status, reason, detail).catch(e => { console.warn('API status update error:', e); return null; });
+    if (apiResult?.whatsappLink) {
+      window.open(apiResult.whatsappLink, '_blank');
+    }
+    if (!apiResult?.success) {
+      console.warn('Status update API returned:', apiResult);
+    }
 
     if (status === 'confirmado') {
       await generateInvoiceForOrder(order);

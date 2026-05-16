@@ -197,8 +197,9 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to send email', detail: sendResult.error.message });
     }
 
-    const whatsappMsg = `Hola ${order.client_name}! Tu pedido *${orderId}* ahora está: *${newStatus.replace('_', ' ')}*${order.status === 'enviado' && order.tracking ? '. Guía: ' + order.tracking : ''}${newStatus === 'cancelado' ? '. Motivo: ' + (reason || 'No especificado') : ''}`;
-    const whatsappLink = `https://wa.me/${STORE_WHATSAPP}?text=${encodeURIComponent(whatsappMsg)}`;
+    const whatsappMsg = `Hola ${order.client_name}! Tu pedido *${orderId}* ahora está: *${newStatus.replace('_', ' ')}*${newStatus === 'enviado' && order.tracking ? '. Guía: ' + order.tracking : ''}${newStatus === 'cancelado' ? '. Motivo: ' + (reason || 'No especificado') : ''}`;
+    const phoneRaw = (order.client_phone || '').replace(/[^0-9+]/g, '').replace(/^\+/, '');
+    const customerWA = phoneRaw ? `https://wa.me/${phoneRaw}?text=${encodeURIComponent(whatsappMsg)}` : `https://wa.me/${STORE_WHATSAPP}?text=${encodeURIComponent(whatsappMsg)}`;
 
     if (order.user_id) {
       await supabase.from('notifications').insert({
@@ -215,7 +216,7 @@ module.exports = async function handler(req, res) {
       success: true,
       message: `Status update sent for order ${orderId}`,
       emailId: sendResult.data?.id,
-      whatsappLink
+      whatsappLink: customerWA
     });
   } catch (err) {
     console.error('send-status-update error:', err);
