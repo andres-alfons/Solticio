@@ -315,5 +315,42 @@
   </div>
 </div>
 <script src="js/chatbot.js"></script>
+<script>
+  // Cargar imágenes dinámicas desde Supabase
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const supabase = getSupabase();
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('product_id, image_url, is_primary')
+        .eq('is_primary', true);
+
+      if (!images) return;
+
+      const { data: products } = await supabase.from('products').select('id, name');
+      if (!products) return;
+
+      const idToName = {};
+      products.forEach(p => { idToName[p.id] = p.name; });
+
+      // Actualizar tarjetas de productos en home
+      const cards = document.querySelectorAll('.collection-card');
+      cards.forEach(card => {
+        const name = card.querySelector('h3')?.textContent || '';
+        const matchingImage = images.find(img => {
+          const productName = idToName[img.product_id];
+          return productName && productName.toLowerCase() === name.toLowerCase();
+        });
+
+        if (matchingImage) {
+          const imgEl = card.querySelector('.collection-card-img img');
+          if (imgEl) imgEl.src = matchingImage.image_url;
+        }
+      });
+    } catch (e) {
+      console.warn('Could not load dynamic images:', e);
+    }
+  });
+</script>
 </body>
 </html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Subir Imágenes a Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 30px; background: #0f0f0f; color: #e5e5e5; line-height: 1.6; }
+    h1 { font-size: 1.5rem; margin-bottom: 10px; color: #f2e5a1; }
+    p { color: #888; margin-bottom: 20px; font-size: 0.85rem; }
+    #log { background: #1a1a1a; padding: 20px; border-radius: 10px; max-height: 70vh; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 0.8rem; border: 1px solid #333; }
+    .ok { color: #4ade80; }
+    .err { color: #f87171; }
+    .info { color: #60a5fa; }
+    .warn { color: #fbbf24; }
+    .progress { margin-top: 15px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, #f2e5a1, #632432); transition: width 0.3s; }
+    #status { margin-top: 10px; font-size: 0.8rem; color: #888; }
+  </style>
+</head>
+<body>
+  <h1>Subir Imágenes a Supabase Storage</h1>
+  <p>Este script sube todas las imágenes de la carpeta <code>img/</code> al bucket <code>product-images</code> y las vincula a los productos en la base de datos.</p>
+  
+  <div id="status">Iniciando...</div>
+  <div class="progress"><div class="progress-bar" id="progressBar" style="width: 0%"></div></div>
+  <div id="log"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://lyhyvmnqvkcvoddaqusa.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aHl2bW5xdmtjdm9kZGFxdXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMTY2MDIsImV4cCI6MjA5MTU5MjYwMn0.tizFP1oF85bmxT3Ss_dPO2DJilix7wmiVIpyDuykmhI';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    let total = 0, completed = 0;
+
+    function msg(text, cls = '') {
+      const div = document.createElement('div');
+      div.className = cls;
+      div.textContent = text;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateProgress() {
+      completed++;
+      const pct = Math.round((completed / total) * 100);
+      progressBar.style.width = pct + '%';
+      statusEl.textContent = `${completed}/${total} completados (${pct}%)`;
+    }
+
+    // Mapeo de productos a sus imágenes (principal + adicionales)
+    const productImages = [
+      { name: 'Aurora', images: ['WhatsApp Image 2026-05-13 at 11.13.18 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.18 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (3).jpeg'] },
+      { name: 'Esmeralda', images: ['WhatsApp Image 2026-05-13 at 11.13.18 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.17 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (1).jpeg'] },
+      { name: 'Noche Eterna', images: ['WhatsApp Image 2026-05-13 at 11.13.17 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.59 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (4).jpeg'] },
+      { name: 'Real', images: ['WhatsApp Image 2026-05-13 at 11.13.17 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.56 PM (1).jpeg'] },
+      { name: 'Sol', images: ['WhatsApp Image 2026-05-13 at 11.13.17 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (2).jpeg'] },
+      { name: 'Luna', images: ['WhatsApp Image 2026-05-13 at 11.13.17 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (1).jpeg'] },
+      { name: 'Gardenia', images: ['WhatsApp Image 2026-05-13 at 11.13.16 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.54 PM.jpeg'] },
+      { name: 'Imperio', images: ['WhatsApp Image 2026-05-13 at 11.13.16 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.56 PM.jpeg'] },
+      { name: 'Marfil', images: ['WhatsApp Image 2026-05-13 at 11.13.16 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (1).jpeg'] },
+      { name: 'Bohemia', images: ['WhatsApp Image 2026-05-13 at 11.13.16 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (3).jpeg'] },
+      { name: 'Medianoche', images: ['WhatsApp Image 2026-05-13 at 11.08.59 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM.jpeg'] },
+      { name: 'Amanecer', images: ['WhatsApp Image 2026-05-13 at 11.08.58 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (2).jpeg'] },
+      { name: 'Clemencia', images: ['WhatsApp Image 2026-05-13 at 11.08.58 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.54 PM.jpeg'] },
+      { name: 'Serena', images: ['WhatsApp Image 2026-05-13 at 11.08.58 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.56 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (2).jpeg'] },
+      { name: 'Opalo', images: ['WhatsApp Image 2026-05-13 at 11.08.57 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (1).jpeg'] },
+      { name: 'Eclipse', images: ['WhatsApp Image 2026-05-13 at 11.08.57 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.56 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (4).jpeg'] },
+      { name: 'Coral', images: ['WhatsApp Image 2026-05-13 at 11.08.57 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (2).jpeg'] },
+      { name: 'Dalia', images: ['WhatsApp Image 2026-05-13 at 11.08.57 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.54 PM.jpeg'] },
+      { name: 'Atardecer', images: ['WhatsApp Image 2026-05-13 at 11.08.56 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.56 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (1).jpeg'] },
+      { name: 'Azalea', images: ['WhatsApp Image 2026-05-13 at 11.08.56 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM (3).jpeg'] },
+      { name: 'Carmin', images: ['WhatsApp Image 2026-05-13 at 11.08.55 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.55 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (4).jpeg'] },
+      { name: 'Magnolia', images: ['WhatsApp Image 2026-05-13 at 11.08.55 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.57 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.54 PM.jpeg'] },
+      { name: 'Valentina', images: ['WhatsApp Image 2026-05-13 at 11.08.55 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (4).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (2).jpeg'] },
+      { name: 'Primavera', images: ['WhatsApp Image 2026-05-13 at 11.08.55 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.16 PM (2).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.58 PM (3).jpeg'] },
+      { name: 'Nieves', images: ['WhatsApp Image 2026-05-13 at 11.08.55 PM.jpeg', 'WhatsApp Image 2026-05-13 at 11.13.18 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.59 PM.jpeg'] },
+      { name: 'Gala Platinum', images: ['WhatsApp Image 2026-05-13 at 11.13.18 PM (1).jpeg', 'WhatsApp Image 2026-05-13 at 11.13.17 PM (3).jpeg', 'WhatsApp Image 2026-05-13 at 11.08.59 PM.jpeg'] },
+    ];
+
+    // Contar total de operaciones
+    productImages.forEach(p => total += p.images.length);
+
+    async function uploadFile(file, path) {
+      const response = await fetch(`img/${encodeURIComponent(file)}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(path, blob, { cacheControl: '3600', upsert: true, contentType: blob.type || 'image/jpeg' });
+
+      if (error) throw error;
+      return data;
+    }
+
+    function getPublicUrl(path) {
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      return data.publicUrl;
+    }
+
+    async function run() {
+      msg('Obteniendo productos de la base de datos...', 'info');
+
+      const { data: products, error: prodError } = await supabase.from('products').select('id, name');
+      if (prodError) { msg(`Error: ${prodError.message}`, 'err'); return; }
+      msg(`Encontrados ${products.length} productos`, 'info');
+
+      const productMap = {};
+      products.forEach(p => { productMap[p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")] = p.id; });
+
+      // Limpiar imágenes existentes
+      msg('Limpiando imágenes existentes...', 'info');
+      const { error: delError } = await supabase.from('product_images').delete().neq('id', 0);
+      if (delError) msg(`Nota: no se pudieron limpiar imágenes existentes: ${delError.message}`, 'warn');
+
+      for (const product of productImages) {
+        const normalizedName = product.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const productId = productMap[normalizedName];
+        
+        if (!productId) {
+          msg(`⚠ Producto "${product.name}" no encontrado en BD`, 'warn');
+          continue;
+        }
+
+        for (let i = 0; i < product.images.length; i++) {
+          const file = product.images[i];
+          const path = `products/${productId}/${i}_${file}`;
+          
+          try {
+            await uploadFile(file, path);
+            const url = getPublicUrl(path);
+            
+            const { error: insertError } = await supabase.from('product_images').insert({
+              product_id: productId,
+              image_url: url,
+              sort_order: i,
+              is_primary: i === 0
+            });
+
+            if (insertError) {
+              msg(`  ✗ ${product.name} [${i}]: ${insertError.message}`, 'err');
+            } else {
+              msg(`✓ ${product.name} [${i}] → ${path}`, 'ok');
+            }
+          } catch (e) {
+            msg(`✗ Error subiendo ${file}: ${e.message}`, 'err');
+          }
+          
+          updateProgress();
+        }
+      }
+
+      msg('\n¡Proceso completado!', 'info');
+      msg('Ahora las imágenes se cargan desde Supabase Storage.', 'info');
+    }
+
+    run();
+  </script>
+</body>
+</html>

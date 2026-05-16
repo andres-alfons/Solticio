@@ -410,6 +410,7 @@ img {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
   margin-top: 3rem;
+  align-items: stretch;
 }
 
 .collection-card {
@@ -420,6 +421,9 @@ img {
   transition: all var(--transition);
   cursor: pointer;
   border: 1px solid rgba(212, 175, 55, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .collection-card:hover {
@@ -499,6 +503,9 @@ img {
 
 .collection-card-body {
   padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .collection-card-body h3 {
@@ -517,6 +524,7 @@ img {
 .collection-card-body p {
   font-size: 0.85rem;
   color: var(--text-light);
+  flex: 1;
 }
 
 /* ======================== SEARCH ======================== */
@@ -1762,11 +1770,37 @@ img {
   line-height: 1.1;
 }
 
+.p-price-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.p-price-original {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
 .p-price {
   font-family: 'Montserrat', sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--gold);
+}
+
+.p-discount-badge {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #22c55e;
+  color: #fff;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
 }
 
 .p-desc {

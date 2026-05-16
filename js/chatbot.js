@@ -14,13 +14,42 @@
   };
 
   const PRODUCTS = [
-    { id: 1, nombre: "Aurora", tipo: "Vestido largo", precio: 450000, precioStr: "$450.000", desc: "Vestido largo en seda natural con bordados florales hechos a mano.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.18%20PM%20(3).jpeg", tags: ["vestido","fiesta","gala","elegante","seda","largo","floral","romantico"], colores: ["champagne","rosa","dorado"], silueta: "A-line", ocasiones: ["gala","boda","fiesta formal"], temporada: "todo" },
-    { id: 2, nombre: "Esmeralda", tipo: "Conjunto", precio: 380000, precioStr: "$380.000", desc: "Conjunto de dos piezas con detalles dorados y corte moderno.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.18%20PM%20(2).jpeg", tags: ["conjunto","moderno","dorado","casual","elegante","dos piezas"], colores: ["verde","dorado","negro"], silueta: "recta", ocasiones: ["coctel","casual elegante","evento diurno"], temporada: "todo" },
-    { id: 3, nombre: "Noche Eterna", tipo: "Vestido de gala", precio: 520000, precioStr: "$520.000", desc: "Vestido de gala en tonos profundos, ideal para eventos nocturnos.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.17%20PM%20(3).jpeg", tags: ["vestido","gala","noche","fiesta","elegante","formal","statement"], colores: ["negro","azul marino","burdeos"], silueta: "sirena", ocasiones: ["gala","boda","fiesta nocturna","evento formal"], temporada: "todo" },
-    { id: 4, nombre: "Real", tipo: "Blazer", precio: 290000, precioStr: "$290.000", desc: "Blazer estructurado con hombreras sutiles y forro de satén.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.17%20PM%20(1).jpeg", tags: ["blazer","formal","oficina","elegante","estructurado","power"], colores: ["negro","blanco","beige"], silueta: "estructurada", ocasiones: ["oficina","corporativo","casual elegante"], temporada: "todo" },
-    { id: 5, nombre: "Sol", tipo: "Conjunto", precio: 340000, precioStr: "$340.000", desc: "Conjunto primaveral en tonos pastel con texturas únicas.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.17%20PM%20(2).jpeg", tags: ["conjunto","primavera","pastel","casual","fresco","romantico","ligero"], colores: ["rosa pastel","lavanda","crema","melocoton"], silueta: "fluida", ocasiones: ["casual","brunch","dia de campo","evento diurno"], temporada: "primavera-verano" },
-    { id: 6, nombre: "Luna", tipo: "Vestido", precio: 480000, precioStr: "$480.000", desc: "Vestido asimétrico con caída perfecta y detalles plateados.", img: "img/WhatsApp%20Image%202026-05-13%20at%2011.13.17%20PM%20(4).jpeg", tags: ["vestido","asimetrico","elegante","fiesta","plateado","moderno","unico"], colores: ["plateado","gris","azul hielo"], silueta: "asimetrica", ocasiones: ["fiesta","coctel","gala","evento nocturno"], temporada: "todo" }
+    { id: 1, nombre: "Aurora", tipo: "Vestido largo", precio: 450000, precioStr: "$450.000", desc: "Vestido largo en seda natural con bordados florales hechos a mano.", img: "", tags: ["vestido","fiesta","gala","elegante","seda","largo","floral","romantico"], colores: ["champagne","rosa","dorado"], silueta: "A-line", ocasiones: ["gala","boda","fiesta formal"], temporada: "todo" },
+    { id: 2, nombre: "Esmeralda", tipo: "Conjunto", precio: 380000, precioStr: "$380.000", desc: "Conjunto de dos piezas con detalles dorados y corte moderno.", img: "", tags: ["conjunto","moderno","dorado","casual","elegante","dos piezas"], colores: ["verde","dorado","negro"], silueta: "recta", ocasiones: ["coctel","casual elegante","evento diurno"], temporada: "todo" },
+    { id: 3, nombre: "Noche Eterna", tipo: "Vestido de gala", precio: 520000, precioStr: "$520.000", desc: "Vestido de gala en tonos profundos, ideal para eventos nocturnos.", img: "", tags: ["vestido","gala","noche","fiesta","elegante","formal","statement"], colores: ["negro","azul marino","burdeos"], silueta: "sirena", ocasiones: ["gala","boda","fiesta nocturna","evento formal"], temporada: "todo" },
+    { id: 4, nombre: "Real", tipo: "Blazer", precio: 290000, precioStr: "$290.000", desc: "Blazer estructurado con hombreras sutiles y forro de satén.", img: "", tags: ["blazer","formal","oficina","elegante","estructurado","power"], colores: ["negro","blanco","beige"], silueta: "estructurada", ocasiones: ["oficina","corporativo","casual elegante"], temporada: "todo" },
+    { id: 5, nombre: "Sol", tipo: "Conjunto", precio: 340000, precioStr: "$340.000", desc: "Conjunto primaveral en tonos pastel con texturas únicas.", img: "", tags: ["conjunto","primavera","pastel","casual","fresco","romantico","ligero"], colores: ["rosa pastel","lavanda","crema","melocoton"], silueta: "fluida", ocasiones: ["casual","brunch","dia de campo","evento diurno"], temporada: "primavera-verano" },
+    { id: 6, nombre: "Luna", tipo: "Vestido", precio: 480000, precioStr: "$480.000", desc: "Vestido asimétrico con caída perfecta y detalles plateados.", img: "", tags: ["vestido","asimetrico","elegante","fiesta","plateado","moderno","unico"], colores: ["plateado","gris","azul hielo"], silueta: "asimetrica", ocasiones: ["fiesta","coctel","gala","evento nocturno"], temporada: "todo" }
   ];
+
+  // Cargar imágenes desde Supabase
+  async function loadChatbotImages() {
+    try {
+      const supabase = getSupabase();
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('product_id, image_url, is_primary')
+        .eq('is_primary', true);
+
+      if (!images) return;
+
+      const { data: products } = await supabase.from('products').select('id, name');
+      if (!products) return;
+
+      const nameToImage = {};
+      products.forEach(p => {
+        const img = images.find(i => i.product_id === p.id);
+        if (img) nameToImage[p.name.toLowerCase()] = img.image_url;
+      });
+
+      PRODUCTS.forEach(prod => {
+        const supabaseImg = nameToImage[prod.nombre.toLowerCase()];
+        if (supabaseImg) prod.img = supabaseImg;
+      });
+    } catch (e) {
+      console.warn('Could not load chatbot images:', e);
+    }
+  }
 
   const STYLE_PROFILES = {
     romantica: { desc: "Te encantan los detalles delicados, telas fluidas y colores suaves. Eres femenina y soñadora.", productos: [1, 5], colores: ["rosa pastel","lavanda","champagne","crema"], telas: ["seda","chiffon","tul"], siluetas: ["A-line","fluida","evasé"] },
@@ -1091,7 +1120,8 @@
     });
   }
 
-  function init() {
+  async function init() {
+    await loadChatbotImages();
     loadState();
     initDOM();
     setupEventListeners();
