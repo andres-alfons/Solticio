@@ -410,7 +410,23 @@ img {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
   margin-top: 3rem;
-  align-items: stretch;
+}
+
+.collection-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  cursor: pointer;
+  border: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.collection-card-img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  position: relative;
 }
 
 .collection-card {
@@ -503,9 +519,32 @@ img {
 
 .collection-card-body {
   padding: 1.5rem;
-  flex: 1;
+}
+
+.collection-card-body h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.collection-card-body .price {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.collection-card-body p {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.collection-card-price {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .collection-card-body h3 {
