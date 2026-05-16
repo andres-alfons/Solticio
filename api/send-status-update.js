@@ -187,7 +187,7 @@ module.exports = async function handler(req, res) {
     const html = generateStatusHTML({ ...order, status: newStatus }, statusInfo, reason, detail);
 
     const sendResult = await resendClient.emails.send({
-      from: 'Valentina Niebles <pedidos@valentinaniebles.com>',
+      from: 'Valentina Niebles <onboarding@resend.dev>',
       to: order.client_email,
       subject: `${statusInfo.emoji} ${statusInfo.title} - Pedido ${orderId}`,
       html

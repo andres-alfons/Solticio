@@ -208,7 +208,7 @@ module.exports = async function handler(req, res) {
     const html = generateInvoiceHTML(invoice);
 
     const sendResult = await resendClient.emails.send({
-      from: `${invoice.store_name || 'Valentina Niebles'} <facturas@valentinaniebles.com>`,
+      from: 'Valentina Niebles <onboarding@resend.dev>',
       to: email || invoice.client_email,
       subject: `Factura ${invoice.invoice_number} - ${invoice.store_name || 'Valentina Niebles'}`,
       html
