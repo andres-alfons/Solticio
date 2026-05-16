@@ -111,7 +111,7 @@
           <td>${orderDate}</td>
           <td>${products.map(p => `${p.name} (x${p.qty || 1})`).join(', ')}</td>
           <td style="color:var(--acc-gold);font-weight:600;">$${(o.total || 0).toLocaleString('es-CO')}</td>
-          <td><span class="account-badge account-badge-${statusBadges[o.status] || 'info'}">${o.status.replace('_', ' ')}</span></td>
+          <td><span class="account-badge account-badge-${statusBadges[o.status] || 'info'}">${o.status.replace('_', ' ')}</span>${o.cancellation_reason ? `<br><small style="color:#c62828;">${o.cancellation_reason}</small>` : ''}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--acc-text-muted);">No hay compras registradas</td></tr>';
 

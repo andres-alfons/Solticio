@@ -53,6 +53,7 @@
   let orders = [];
   let clients = [];
   let appointments = [];
+  let invoices = [];
   let notifications = [];
   let activities = [];
 
@@ -62,6 +63,7 @@
       loadOrders(),
       loadClients(),
       loadAppointments(),
+      loadInvoices(),
       loadNotifications(),
       loadActivities()
     ]);
@@ -107,6 +109,11 @@
   async function loadAppointments() {
     const { data, error } = await supabase.from('appointments').select('*').order('date', { ascending: true });
     if (!error) appointments = data || [];
+  }
+
+  async function loadInvoices() {
+    const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+    if (!error) invoices = data || [];
   }
 
   async function loadNotifications() {
@@ -221,6 +228,7 @@
     clients: ['Clientes', 'Panel · Clientes'],
     appointments: ['Citas', 'Panel · Citas'],
     inventory: ['Inventario', 'Panel · Inventario'],
+    invoices: ['Facturas', 'Panel · Facturas'],
     stats: ['Estadísticas', 'Panel · Estadísticas'],
     reports: ['Reportes', 'Panel · Reportes'],
     settings: ['Configuración', 'Panel · Configuración']
@@ -248,6 +256,7 @@
       case 'clients': renderClients(); break;
       case 'appointments': renderAppointments(); break;
       case 'inventory': renderInventory(); break;
+      case 'invoices': renderInvoices(); break;
       case 'stats': renderStats(); break;
     }
   };
@@ -650,7 +659,7 @@
           <td>
             <div class="admin-table-actions">
               <button class="admin-table-action" title="Ver detalle" onclick="viewOrder('${o.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-              <select class="admin-table-filter" style="padding:4px 8px;font-size:11px;" onchange="updateOrderStatus('${o.id}', this.value)">
+               <select class="admin-table-filter" style="padding:4px 8px;font-size:11px;" onchange="if(this.value==='cancelado'){openCancelModal('${o.id}');this.value='${o.status}';}else{updateOrderStatus('${o.id}', this.value)}">
                 <option value="pendiente" ${o.status==='pendiente'?'selected':''}>Pendiente</option>
                 <option value="confirmado" ${o.status==='confirmado'?'selected':''}>Confirmado</option>
                 <option value="en_produccion" ${o.status==='en_produccion'?'selected':''}>En producción</option>
@@ -672,25 +681,172 @@
     renderOrders();
   };
 
-  window.updateOrderStatus = async function(id, status) {
+  window.updateOrderStatus = async function(id, status, reason, detail) {
     const order = orders.find(o => o.id === id);
-    if (order) {
-      const success = await updateOrderStatusInDb(id, status);
-      if (success) {
-        order.status = status;
-        await insertActivity('blue', `Pedido ${id} → ${status}`);
-        showToast('Estado actualizado', `Pedido ${id} ahora está "${status}"`);
-        renderOrders();
-      }
+    if (!order) return;
+    const oldStatus = order.status;
+
+    if (status === 'cancelado' && !reason) {
+      document.getElementById('cancelOrderId').value = id;
+      document.getElementById('cancelModal').classList.add('show');
+      document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
+      document.getElementById('cancelDetail').value = '';
+      document.getElementById('cancelDetailGroup').style.display = 'none';
+      return;
     }
+
+    const success = await updateOrderStatusInDb(id, status);
+    if (!success) return;
+
+    if (status === 'cancelado') {
+      await supabase.from('orders').update({
+        cancellation_reason: reason || '',
+        cancellation_detail: detail || ''
+      }).eq('id', id);
+      order.cancellation_reason = reason || '';
+      order.cancellation_detail = detail || '';
+    }
+
+    order.status = status;
+
+    await DataStore.createStatusLog({
+      order_id: id,
+      old_status: oldStatus,
+      new_status: status,
+      reason: reason || '',
+      detail: detail || '',
+      changed_by: currentAdmin?.id || null
+    });
+
+    await insertActivity('blue', `Pedido ${id} → ${status.replace('_', ' ')}${reason ? ' (' + reason + ')' : ''}`);
+
+    callStatusUpdateAPI(id, status, reason, detail).catch(e => console.warn('API status update:', e));
+
+    if (status === 'confirmado') {
+      await generateInvoiceForOrder(order);
+    }
+
+    showToast('Estado actualizado', `Pedido ${id} ahora: "${status.replace('_', ' ')}"`);
+    renderOrders();
   };
+
+  window.openCancelModal = function(id) {
+    document.getElementById('cancelOrderId').value = id;
+    document.getElementById('cancelModal').classList.add('show');
+    document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
+    document.getElementById('cancelDetail').value = '';
+    document.getElementById('cancelDetailGroup').style.display = 'none';
+
+    document.querySelectorAll('input[name="cancelReason"]').forEach(radio => {
+      radio.onchange = function() {
+        document.getElementById('cancelDetailGroup').style.display = this.value === 'otra' ? 'block' : 'none';
+        if (this.value !== 'otra') document.getElementById('cancelDetail').value = '';
+      };
+    });
+  };
+
+  window.closeCancelModal = function() {
+    document.getElementById('cancelModal').classList.remove('show');
+  };
+
+  window.confirmCancellation = async function() {
+    const id = document.getElementById('cancelOrderId').value;
+    const selected = document.querySelector('input[name="cancelReason"]:checked');
+    if (!selected) { showToast('Error', 'Selecciona un motivo de cancelación', 'error'); return; }
+
+    const reasonLabels = {
+      falta_stock: 'Falta de stock',
+      intento_estafa: 'Intento de estafa / fraude',
+      datos_invalidos: 'Datos de envío inválidos',
+      cliente_solicito: 'Cliente solicitó cancelación',
+      problema_pago: 'Problema con el pago',
+      producto_no_disponible: 'Producto no disponible',
+      otra: 'Otra razón'
+    };
+    const reason = reasonLabels[selected.value] || selected.value;
+    const detail = selected.value === 'otra' ? document.getElementById('cancelDetail').value.trim() : '';
+    if (selected.value === 'otra' && !detail) { showToast('Error', 'Describe el motivo de cancelación', 'error'); return; }
+
+    closeCancelModal();
+    await updateOrderStatus(id, 'cancelado', reason, detail);
+  };
+
+  async function generateInvoiceForOrder(order) {
+    try {
+      const settings = await getSettingsForInvoice();
+      const products = order.products || [];
+      const subtotal = products.reduce((s, p) => s + ((p.price || 0) * (p.qty || 1)), 0);
+      const taxRate = 19;
+      const taxTotal = Math.round(subtotal * taxRate / 100);
+
+      const { data: lastInvoice } = await supabase.from('invoices').select('consecutive').order('consecutive', { ascending: false }).limit(1);
+      const nextConsecutive = (lastInvoice?.[0]?.consecutive || 0) + 1;
+      const prefix = settings.invoice_prefix || 'FAC';
+      const invoiceNumber = `${prefix}-001-${String(nextConsecutive).padStart(8, '0')}`;
+
+      const invoice = {
+        invoice_number: invoiceNumber,
+        order_id: order.id,
+        user_id: order.user_id || null,
+        client_name: order.client_name,
+        client_email: order.client_email,
+        client_phone: order.client_phone || '',
+        client_doc: order.client_doc || '',
+        client_address: order.address || '',
+        resolution_number: settings.invoice_resolution || '',
+        resolution_date: settings.invoice_resolution_date || '',
+        prefix: prefix,
+        consecutive: nextConsecutive,
+        cufe: '',
+        qr_code: '',
+        store_nit: settings.store_nit || '',
+        store_name: settings.store_name || 'Valentina Niebles',
+        store_regime: settings.store_regime || 'comun',
+        store_address: settings.store_location || '',
+        store_phone: settings.store_phone || '',
+        store_email: settings.store_email || '',
+        products: products,
+        subtotal: subtotal,
+        tax_rate: taxRate,
+        tax_total: taxTotal,
+        discount: 0,
+        total: order.total,
+        payment_method: order.payment || '',
+        payment_status: 'pendiente',
+        invoice_status: 'emitida',
+        pdf_url: '',
+        sent_at: null
+      };
+
+      const inv = await DataStore.createInvoice(invoice);
+      if (inv) {
+        invoices.unshift(inv);
+        await insertActivity('gold', `Factura ${invoiceNumber} generada para pedido ${order.id}`);
+        showToast('Factura generada', `${invoiceNumber} para ${order.client_name}`);
+        callSendInvoiceAPI(inv.id, order.client_email).catch(e => console.warn('Send invoice API:', e));
+      }
+    } catch (err) {
+      console.error('Error generating invoice:', err);
+    }
+  }
+
+  async function getSettingsForInvoice() {
+    const { data } = await supabase.from('settings').select('*');
+    if (!data) return {};
+    const s = {};
+    data.forEach(r => { s[r.key] = r.value; });
+    return s;
+  }
 
   window.viewOrder = function(id) {
     const o = orders.find(or => or.id === id);
     if (o) {
       const prods = typeof o.products === 'string' ? JSON.parse(o.products) : o.products;
       const prodList = Array.isArray(prods) ? prods.map(p => `${p.name || p.nombre} x${p.qty || 1}`).join(', ') : '';
-      alert(`Pedido: ${o.id}\nCliente: ${o.client_name}\nEmail: ${o.client_email}\nTel: ${o.client_phone}\nDirección: ${o.address}\nProductos: ${prodList}\nTotal: $${Number(o.total).toLocaleString('es-CO')}\nPago: ${o.payment}\nNotas: ${o.notes || 'N/A'}`);
+      let info = `Pedido: ${o.id}\nCliente: ${o.client_name}\nEmail: ${o.client_email}\nTel: ${o.client_phone}\nDirección: ${o.address}\nProductos: ${prodList}\nTotal: $${Number(o.total).toLocaleString('es-CO')}\nPago: ${o.payment}\nNotas: ${o.notes || 'N/A'}`;
+      if (o.cancellation_reason) info += `\n\nCancelado - Motivo: ${o.cancellation_reason}`;
+      if (o.cancellation_detail) info += `\nDetalle: ${o.cancellation_detail}`;
+      alert(info);
     }
   };
 
@@ -948,6 +1104,132 @@
   };
 
   // ============================================
+  // INVOICES
+  // ============================================
+  let invoiceFilter = 'all';
+  let currentViewInvoice = null;
+
+  function renderInvoices() {
+    let filtered = [...invoices];
+    if (invoiceFilter !== 'all') filtered = filtered.filter(inv => inv.invoice_status === invoiceFilter);
+    document.getElementById('invoiceCount').textContent = filtered.length + ' facturas';
+
+    const tbody = document.getElementById('invoicesTableBody');
+    tbody.innerHTML = filtered.map(inv => `
+      <tr>
+        <td><strong style="color:var(--admin-text)">${inv.invoice_number}</strong></td>
+        <td>${inv.client_name}</td>
+        <td>${inv.order_id}</td>
+        <td>$${Number(inv.total).toLocaleString('es-CO')}</td>
+        <td>${inv.created_at ? new Date(inv.created_at).toLocaleDateString('es-CO') : ''}</td>
+        <td>${statusBadge(inv.invoice_status)}</td>
+        <td>
+          <div class="admin-table-actions">
+            <button class="admin-table-action" title="Ver factura" onclick="viewInvoice(${inv.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="admin-table-action" title="Reenviar por email" onclick="resendInvoiceById(${inv.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+            ${inv.invoice_status !== 'anulada' ? `<button class="admin-table-action" title="Anular factura" onclick="voidInvoice(${inv.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>` : ''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.filterInvoices = function(filter, btn) {
+    invoiceFilter = filter;
+    btn.parentElement.querySelectorAll('.admin-table-filter').forEach(f => f.classList.remove('active'));
+    btn.classList.add('active');
+    renderInvoices();
+  };
+
+  window.viewInvoice = async function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) {
+      const { data } = await supabase.from('invoices').select('*').eq('id', id).single();
+      if (!data) return;
+      currentViewInvoice = data;
+    } else {
+      currentViewInvoice = inv;
+    }
+    document.getElementById('invoiceViewContent').innerHTML = generateInvoicePreviewHTML(currentViewInvoice);
+    document.getElementById('invoiceViewModal').classList.add('show');
+  };
+
+  window.closeInvoiceView = function() {
+    document.getElementById('invoiceViewModal').classList.remove('show');
+    currentViewInvoice = null;
+  };
+
+  function generateInvoicePreviewHTML(inv) {
+    const products = inv.products || [];
+    const rows = products.map(p => {
+      const subtotal = (p.price || 0) * (p.qty || 1);
+      return `<tr><td>${p.name || 'Producto'}</td><td>${p.qty || 1}</td><td>$${(p.price || 0).toLocaleString('es-CO')}</td><td>$${subtotal.toLocaleString('es-CO')}</td></tr>`;
+    }).join('');
+    const date = inv.created_at ? new Date(inv.created_at).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' }) : '';
+
+    return `<div class="invoice-preview" style="font-family:system-ui,sans-serif;background:#fff;padding:24px;border-radius:8px;color:#1a1a2e;">
+      <div style="display:flex;justify-content:space-between;border-bottom:3px solid #c9a96e;padding-bottom:16px;margin-bottom:16px;">
+        <div><div style="font-size:22px;font-weight:800;color:#c9a96e;letter-spacing:2px;">${inv.store_name||'VALENTINA NIEBLES'}</div>
+        ${inv.store_nit?`<div style="font-size:11px;color:#666;">NIT: ${inv.store_nit}</div>`:''}<div style="font-size:11px;color:#666;">Régimen: ${inv.store_regime==='simplificado'?'Simplificado':'Común'}</div></div>
+        <div style="text-align:right;"><div style="font-size:12px;font-weight:700;color:#c9a96e;text-transform:uppercase;letter-spacing:2px;">Factura Electrónica</div><div style="font-size:18px;font-weight:700;">${inv.invoice_number}</div><div style="font-size:11px;color:#999;">${date}</div></div>
+      </div>
+      ${inv.resolution_number?`<div style="background:#fdf6e9;border-left:4px solid #c9a96e;padding:10px 14px;margin-bottom:16px;font-size:11px;color:#856404;"><strong>Res. DIAN:</strong> N° ${inv.resolution_number}${inv.resolution_date?' del '+inv.resolution_date:''}</div>`:''}
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#1a1a2e;color:#c9a96e;"><th style="padding:8px;text-align:left;">Producto</th><th style="padding:8px;">Cant</th><th style="padding:8px;text-align:right;">Vr Unit</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-left:auto;max-width:300px;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Subtotal</span><span>$${(inv.subtotal||0).toLocaleString('es-CO')}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>IVA (${(inv.tax_rate||19).toFixed(0)}%)</span><span>$${(inv.tax_total||0).toLocaleString('es-CO')}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0 0;border-top:3px double #1a1a2e;font-size:16px;font-weight:700;"><span>Total COP</span><span>$${(inv.total||0).toLocaleString('es-CO')}</span></div>
+      </div>
+      <div style="text-align:center;margin-top:20px;font-size:10px;color:#999;">Factura electrónica válida según normativa DIAN colombiana</div>
+    </div>`;
+  }
+
+  window.resendInvoiceById = async function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+    const result = await callSendInvoiceAPI(id, inv.client_email);
+    if (result.success) {
+      showToast('Reenviada', `Factura ${inv.invoice_number} reenviada a ${inv.client_email}`);
+      const idx = invoices.findIndex(i => i.id === id);
+      if (idx >= 0) invoices[idx].sent_at = new Date().toISOString();
+    } else {
+      showToast('Error', 'No se pudo enviar. Verifica RESEND_API_KEY en Vercel.', 'error');
+    }
+  };
+
+  window.resendInvoice = function() {
+    if (currentViewInvoice) resendInvoiceById(currentViewInvoice.id);
+  };
+
+  window.downloadInvoicePDF = async function() {
+    if (!currentViewInvoice) return;
+    const result = await callGeneratePDFAPI(currentViewInvoice.id);
+    if (result.pdfUrl) {
+      window.open(result.pdfUrl, '_blank');
+      showToast('PDF generado', 'Factura descargada');
+      const idx = invoices.findIndex(i => i.id === currentViewInvoice.id);
+      if (idx >= 0) invoices[idx].pdf_url = result.pdfUrl;
+    } else {
+      showToast('Info', 'El PDF se genera en producción con puppeteer', 'warning');
+    }
+  };
+
+  window.voidInvoice = async function(id) {
+    const inv = invoices.find(i => i.id === id);
+    if (!inv) return;
+    if (confirm(`¿Anular la factura ${inv.invoice_number}? Esta acción no se puede deshacer.`)) {
+      await DataStore.updateInvoice(id, { invoice_status: 'anulada' });
+      inv.invoice_status = 'anulada';
+      await insertActivity('red', `Factura ${inv.invoice_number} anulada`);
+      renderInvoices();
+      showToast('Anulada', `Factura ${inv.invoice_number} anulada`, 'warning');
+    }
+  };
+
+  // ============================================
   // STATS
   // ============================================
   function renderStats() {
@@ -1133,7 +1415,7 @@
   init();
 
   window.AdminPanel = {
-    getData: () => ({ products, orders, clients, appointments, notifications, activities }),
+    getData: () => ({ products, orders, clients, appointments, invoices, notifications, activities }),
     addActivity,
     showToast: window.showToast
   };

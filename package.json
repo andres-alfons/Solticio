@@ -1,0 +1,16 @@
+{
+  "name": "valentina-niebles",
+  "version": "2.0.0",
+  "description": "Valentina Niebles - Tienda de moda de alta costura",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^3.2.0",
+    "puppeteer-core": "^21.0.0",
+    "@sparticuz/chromium-min": "^121.0.0"
+  }
+}

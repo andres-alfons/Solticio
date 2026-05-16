@@ -57,6 +57,7 @@ create table orders (
   client_name text not null,
   client_email text not null,
   client_phone text default '',
+  client_doc text default '',
   products jsonb not null,
   total numeric not null,
   status text not null default 'pendiente' check (status in ('pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado', 'cancelado')),
@@ -65,6 +66,8 @@ create table orders (
   notes text default '',
   tracking text default '',
   carrier text default '',
+  cancellation_reason text default '',
+  cancellation_detail text default '',
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -381,15 +384,6 @@ create trigger on_stock_change
   when (old.stock > new.stock)
   execute procedure public.check_low_stock();
 
--- Increment product views
-create or replace function public.increment_product_views()
-returns trigger as $$
-begin
-  update products set views = views + 1 where id = new.id;
-  return new;
-end;
-$$ language plpgsql;
-
 -- Increment product sales on order
 create or replace function public.increment_product_sales()
 returns trigger as $$
@@ -452,61 +446,6 @@ begin
     and created_at >= now() - (p_months || ' months')::interval
   group by to_char(created_at, 'Mon'), to_char(created_at, 'MM')
   order by to_char(created_at, 'MM');
-end;
-$$ language plpgsql security definer;
-
--- Get category sales data
-create or replace function public.get_category_sales()
-returns table(category text, revenue numeric, order_count bigint) as $$
-declare
-  order_record record;
-  product_record jsonb;
-begin
-  create temp table if not exists temp_category_sales (
-    category text,
-    revenue numeric,
-    order_count bigint
-  );
-  delete from temp_category_sales;
-
-  for order_record in select * from orders where status not in ('cancelado')
-  loop
-    for product_record in select * from jsonb_array_elements(order_record.products)
-    loop
-      insert into temp_category_sales (category, revenue, order_count)
-      select
-        p.category,
-        (product_record->>'price')::numeric * (product_record->>'qty')::int,
-        1
-      from products p
-      where p.id = (product_record->>'id')::bigint
-      on conflict do nothing;
-    end loop;
-  end loop;
-
-  return query
-  select category, sum(revenue), sum(order_count)
-  from temp_category_sales
-  group by category
-  order by sum(revenue) desc;
-end;
-$$ language plpgsql security definer;
-
--- Get top products
-create or replace function public.get_top_products(p_limit int default 10)
-returns table(id bigint, name text, category text, price numeric, sales int, revenue numeric) as $$
-begin
-  return query
-  select
-    p.id,
-    p.name,
-    p.category,
-    p.price,
-    p.sales,
-    (p.sales * p.price)::numeric as revenue
-  from products p
-  order by p.sales desc
-  limit p_limit;
 end;
 $$ language plpgsql security definer;
 

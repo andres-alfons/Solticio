@@ -131,6 +131,11 @@
                   <div class="account-order-product-name">${products.map(p => `${p.name} (x${p.qty || 1})`).join(', ')}</div>
                   <div class="account-order-product-detail">${products.map(p => `${p.size || ''} ${p.color || ''}`).join(' | ')}</div>
                   ${order.tracking ? `<div class="account-order-product-detail" style="margin-top:4px;">📦 ${order.carrier} · Guía: ${order.tracking}</div>` : ''}
+                  ${order.status === 'cancelado' ? `<div style="margin-top:8px;padding:8px 12px;background:#fce4ec;border:1px solid #f8bbd0;border-radius:8px;font-size:12px;">
+                    <span style="color:#c62828;font-weight:700;">Cancelado</span>
+                    ${order.cancellation_reason ? `<p style="margin:4px 0 0;color:#b71c1c;">Motivo: ${order.cancellation_reason}</p>` : ''}
+                    ${order.cancellation_detail ? `<p style="margin:4px 0 0;color:#d32f2f;font-style:italic;">"${order.cancellation_detail}"</p>` : ''}
+                  </div>` : ''}
                 </div>
                 <div class="account-order-total">
                   <div class="account-order-total-label">Total</div>
