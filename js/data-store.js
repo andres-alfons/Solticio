@@ -191,7 +191,7 @@ const DataStore = (function() {
     const { data, error } = await getDb()
       .from('notifications')
       .select('*')
-      .or(`user_id.eq.${userId},user_id.is.null`)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) { console.error('Error fetching notifications:', error); return []; }
@@ -231,7 +231,7 @@ const DataStore = (function() {
     const { count, error } = await getDb()
       .from('notifications')
       .select('*', { count: 'exact', head: true })
-      .or(`user_id.eq.${userId},user_id.is.null`)
+      .eq('user_id', userId)
       .eq('read', false);
 
     if (error) return 0;

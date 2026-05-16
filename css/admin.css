@@ -9,23 +9,37 @@
   left: 20px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 8px;
+  padding: 10px 18px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.4);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--admin-gold-light);
   text-decoration: none;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  background: rgba(255,255,255,0.03);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(201, 169, 110, 0.15);
+  border-radius: 8px;
+  background: rgba(201, 169, 110, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
 }
 
+.admin-login-back svg {
+  transition: transform 0.3s ease;
+}
+
 .admin-login-back:hover {
-  color: rgba(255,255,255,0.8);
-  border-color: rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.06);
+  color: var(--admin-gold);
+  border-color: rgba(201, 169, 110, 0.4);
+  background: rgba(201, 169, 110, 0.1);
+  box-shadow: 0 0 20px rgba(201, 169, 110, 0.08);
+  transform: translateX(-2px);
+}
+
+.admin-login-back:hover svg {
+  transform: translateX(-3px);
 }
 
 :root {
@@ -335,6 +349,42 @@ body {
 .admin-sidebar-footer {
   padding: 16px;
   border-top: 1px solid var(--admin-border);
+}
+
+.admin-sidebar-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--admin-gold-light);
+  text-decoration: none;
+  border: 1px solid rgba(201, 169, 110, 0.12);
+  border-radius: 8px;
+  background: rgba(201, 169, 110, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-back svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.admin-sidebar-back:hover {
+  color: var(--admin-gold);
+  border-color: rgba(201, 169, 110, 0.35);
+  background: rgba(201, 169, 110, 0.09);
+  box-shadow: 0 0 16px rgba(201, 169, 110, 0.06);
+}
+
+.admin-sidebar-back:hover svg {
+  transform: translateX(-3px);
 }
 
 .admin-user-info {
@@ -860,6 +910,11 @@ body {
   flex-shrink: 0;
 }
 
+.admin-toast-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
 .admin-toast-icon.success { background: var(--admin-green-bg); color: var(--admin-green); }
 .admin-toast-icon.error { background: var(--admin-red-bg); color: var(--admin-red); }
 .admin-toast-icon.warning { background: var(--admin-orange-bg); color: var(--admin-orange); }
@@ -924,6 +979,11 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.admin-notif-item-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .admin-notif-item-content { flex: 1; }

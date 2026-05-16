@@ -128,7 +128,7 @@
                   ${products.map(p => `<div class="account-order-product-thumb">${(p.name || 'P')[0]}</div>`).join('')}
                 </div>
                 <div class="account-order-product-info">
-                  <div class="account-order-product-name">${products.map(p => p.name).join(', ')}</div>
+                  <div class="account-order-product-name">${products.map(p => `${p.name} (x${p.qty || 1})`).join(', ')}</div>
                   <div class="account-order-product-detail">${products.map(p => `${p.size || ''} ${p.color || ''}`).join(' | ')}</div>
                   ${order.tracking ? `<div class="account-order-product-detail" style="margin-top:4px;">📦 ${order.carrier} · Guía: ${order.tracking}</div>` : ''}
                 </div>

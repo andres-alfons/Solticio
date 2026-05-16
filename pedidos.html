@@ -159,7 +159,7 @@
 
     const statusSteps = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado'];
     const statusLabels = ['Recibido', 'Confirmado', 'En Confección', 'Enviado', 'Entregado'];
-    const statusIcons = ['📋', '✅', '✂️', '📦', '🏠'];
+    const statusIcons = ['bi-inbox', 'bi-check-circle', 'bi-scissors', 'bi-truck', 'bi-box-seam'];
     const statusBadges = { pendiente: 'warning', confirmado: 'info', en_produccion: 'purple', enviado: 'gold', entregado: 'success', cancelado: 'danger' };
 
     container.innerHTML = `<div class="tracking-list">${sortedOrders.map(order => {
@@ -169,7 +169,7 @@
         let cls = '';
         if (i < currentIdx) cls = 'completed';
         else if (i === currentIdx) cls = 'current';
-        progress += `<div class="timeline-step ${cls}"><div class="timeline-dot"><i class="bi ${statusIcons[i] === '📋' ? 'bi-inbox' : statusIcons[i] === '✅' ? 'bi-check-circle' : statusIcons[i] === '✂️' ? 'bi-scissors' : statusIcons[i] === '📦' ? 'bi-truck' : 'bi-box-seam'}"></i></div><span class="timeline-label">${statusLabels[i]}</span></div>`;
+        progress += `<div class="timeline-step ${cls}"><div class="timeline-dot"><i class="bi ${statusIcons[i]}"></i></div><span class="timeline-label">${statusLabels[i]}</span></div>`;
       });
       progress += '</div>';
 
@@ -181,7 +181,7 @@
         <div class="tracking-card fade-in">
           <div class="tracking-card-header">
             <div>
-              <h3>${products.map(p => p.name).join(', ')}</h3>
+              <h3>${products.map(p => `${p.name} (x${p.qty || 1})`).join(', ')}</h3>
               <span class="tracking-order-id">#${order.id}</span>
             </div>
             <span class="tracking-status-badge">${order.status.replace('_', ' ')}</span>
