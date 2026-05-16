@@ -709,14 +709,14 @@
 
     order.status = status;
 
-    await DataStore.createStatusLog({
+    supabase.from('order_status_log').insert({
       order_id: id,
       old_status: oldStatus,
       new_status: status,
       reason: reason || '',
       detail: detail || '',
       changed_by: currentAdmin?.id || null
-    });
+    }).then(r => { if (r.error) console.warn('Status log insert error:', r.error); });
 
     await insertActivity('blue', `Pedido ${id} → ${status.replace('_', ' ')}${reason ? ' (' + reason + ')' : ''}`);
 
@@ -784,7 +784,7 @@
       const prefix = settings.invoice_prefix || 'FAC';
       const invoiceNumber = `${prefix}-001-${String(nextConsecutive).padStart(8, '0')}`;
 
-      const invoice = {
+      const { data: inv, error: invErr } = await supabase.from('invoices').insert({
         invoice_number: invoiceNumber,
         order_id: order.id,
         user_id: order.user_id || null,
@@ -816,10 +816,8 @@
         invoice_status: 'emitida',
         pdf_url: '',
         sent_at: null
-      };
-
-      const inv = await DataStore.createInvoice(invoice);
-      if (inv) {
+      }).select().single();
+      if (inv && !invErr) {
         invoices.unshift(inv);
         await insertActivity('gold', `Factura ${invoiceNumber} generada para pedido ${order.id}`);
         showToast('Factura generada', `${invoiceNumber} para ${order.client_name}`);
@@ -1221,7 +1219,7 @@
     const inv = invoices.find(i => i.id === id);
     if (!inv) return;
     if (confirm(`¿Anular la factura ${inv.invoice_number}? Esta acción no se puede deshacer.`)) {
-      await DataStore.updateInvoice(id, { invoice_status: 'anulada' });
+      await supabase.from('invoices').update({ invoice_status: 'anulada' }).eq('id', id);
       inv.invoice_status = 'anulada';
       await insertActivity('red', `Factura ${inv.invoice_number} anulada`);
       renderInvoices();
