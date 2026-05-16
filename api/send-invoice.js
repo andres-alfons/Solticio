@@ -144,7 +144,7 @@ function generateInvoiceHTML(invoice) {
       </div>
       <div class="totals-row">
         <span class="totals-label">IVA (${taxRate}%)</span>
-        <span class="totals-value">$${(invoice.tax_total || 0).toLocaleString('es-CO')}</span>
+        <span class="totals-value">$0</span>
       </div>
       ${invoice.discount > 0 ? `<div class="totals-row">
         <span class="totals-label">Descuento</span>

@@ -284,7 +284,26 @@ function openPaymentModal(product) {
             <div><label>Correo</label><input type="email" id="payEmail" placeholder="tucorreo@email.com" required></div>
           </div>
           <div class="modal-form-row">
-            <div><label>Teléfono</label><input type="tel" id="payPhone" placeholder="+57 300 000 0000" required></div>
+            <div>
+              <label>Teléfono</label>
+              <div style="display:flex;gap:6px;">
+                <select id="payPhoneCode" style="width:100px;padding:10px 8px;background:var(--modal-bg, #1a1a2e);border:1px solid var(--modal-border, #333);border-radius:8px;color:var(--modal-text, #fff);font-size:13px;appearance:auto;">
+                  <option value="+57">+57 🇨🇴</option>
+                  <option value="+54">+54 🇦🇷</option>
+                  <option value="+591">+591 🇧🇴</option>
+                  <option value="+56">+56 🇨🇱</option>
+                  <option value="+593">+593 🇪🇨</option>
+                  <option value="+52">+52 🇲🇽</option>
+                  <option value="+595">+595 🇵🇾</option>
+                  <option value="+51">+51 🇵🇪</option>
+                  <option value="+598">+598 🇺🇾</option>
+                  <option value="+58">+58 🇻🇪</option>
+                  <option value="+1">+1 🇺🇸</option>
+                  <option value="+34">+34 🇪🇸</option>
+                </select>
+                <input type="tel" id="payPhone" placeholder="300 000 0000" maxlength="10" style="flex:1;" required>
+              </div>
+            </div>
             <div><label>Documento</label><input type="text" id="payDoc" placeholder="CC / NIT" required></div>
           </div>
           <div><label>Dirección de Envío</label><input type="text" id="payAddress" placeholder="Dirección completa" required></div>
@@ -294,16 +313,6 @@ function openPaymentModal(product) {
             <div class="payment-method selected" data-method="transferencia"><i class="bi bi-bank"></i> Transferencia</div>
             <div class="payment-method" data-method="nequi"><i class="bi bi-phone"></i> Nequi</div>
             <div class="payment-method" data-method="efectivo"><i class="bi bi-cash"></i> Efectivo</div>
-            <div class="payment-method" data-method="tarjeta"><i class="bi bi-credit-card"></i> Tarjeta</div>
-          </div>
-
-          <div id="cardFields" style="display:none;flex-direction:column;gap:0.8rem;">
-            <div><label>Número de Tarjeta</label><input type="text" id="cardNumber" placeholder="0000 0000 0000 0000"></div>
-            <div class="modal-form-row">
-              <div><label>Vencimiento</label><input type="text" id="cardExpiry" placeholder="MM/AA"></div>
-              <div><label>CVV</label><input type="text" id="cardCVV" placeholder="123"></div>
-            </div>
-            <div><label>Titular</label><input type="text" id="cardHolder" placeholder="Nombre en la tarjeta"></div>
           </div>
 
           <button type="submit" class="modal-submit"><i class="bi bi-lock-fill"></i> Pagar y Confirmar Pedido</button>
@@ -343,8 +352,6 @@ function openPaymentModal(product) {
     method.addEventListener('click', () => {
       overlay.querySelectorAll('#payMethods .payment-method').forEach(m => m.classList.remove('selected'));
       method.classList.add('selected');
-      const cardFields = overlay.querySelector('#cardFields');
-      cardFields.style.display = method.dataset.method === 'tarjeta' ? 'flex' : 'none';
     });
   });
 
@@ -367,7 +374,7 @@ function openPaymentModal(product) {
       userId: currentUser ? currentUser.id : null,
       client: overlay.querySelector('#payName').value,
       email: currentUser ? currentUser.email : overlay.querySelector('#payEmail').value,
-      phone: overlay.querySelector('#payPhone')?.value || '',
+      phone: (overlay.querySelector('#payPhoneCode')?.value || '+57') + ' ' + (overlay.querySelector('#payPhone')?.value || ''),
       doc: overlay.querySelector('#payDoc')?.value || '',
       products: [{ name: product.name, qty: parseInt(qty), price: parseInt(product.price.replace(/\D/g, '')), size, color: '' }],
       total: parseInt(product.price.replace(/\D/g, '')) * parseInt(qty),

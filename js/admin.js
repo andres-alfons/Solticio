@@ -53,9 +53,10 @@
   let orders = [];
   let clients = [];
   let appointments = [];
-  let invoices = [];
   let notifications = [];
   let activities = [];
+  let invoices = [];
+  let productImages = [];
 
   async function loadAllData() {
     await Promise.all([
@@ -64,6 +65,7 @@
       loadClients(),
       loadAppointments(),
       loadInvoices(),
+      loadProductImages(),
       loadNotifications(),
       loadActivities()
     ]);
@@ -114,6 +116,22 @@
   async function loadInvoices() {
     const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
     if (!error) invoices = data || [];
+  }
+
+  async function loadProductImages() {
+    const { data, error } = await supabase.from('product_images').select('*').order('sort_order', { ascending: true });
+    if (!error) {
+      productImages = data || [];
+    }
+  }
+
+  function getProductImages(productId) {
+    return productImages.filter(img => img.product_id === productId).sort((a, b) => a.sort_order - b.sort_order);
+  }
+
+  function getProductPrimaryImage(productId) {
+    const imgs = getProductImages(productId);
+    return imgs.find(img => img.is_primary) || imgs[0] || null;
   }
 
   async function loadNotifications() {
@@ -229,6 +247,7 @@
     appointments: ['Citas', 'Panel · Citas'],
     inventory: ['Inventario', 'Panel · Inventario'],
     invoices: ['Facturas', 'Panel · Facturas'],
+    discounts: ['Descuentos', 'Panel · Descuentos'],
     stats: ['Estadísticas', 'Panel · Estadísticas'],
     reports: ['Reportes', 'Panel · Reportes'],
     settings: ['Configuración', 'Panel · Configuración']
@@ -257,12 +276,29 @@
       case 'appointments': renderAppointments(); break;
       case 'inventory': renderInventory(); break;
       case 'invoices': renderInvoices(); break;
+      case 'discounts': renderDiscounts(); break;
       case 'stats': renderStats(); break;
     }
   };
 
   // ============================================
-  // TOAST NOTIFICATIONS
+  // BADGES
+  // ============================================
+  function updateBadges() {
+    const pendingOrders = orders.filter(o => o.status === 'pendiente').length;
+    const ordersBadge = document.getElementById('ordersBadge');
+    if (ordersBadge) {
+      ordersBadge.textContent = pendingOrders;
+      ordersBadge.style.display = pendingOrders > 0 ? '' : 'none';
+    }
+    const pendingAppts = appointments.filter(a => a.status === 'pendiente').length;
+    const apptBadge = document.getElementById('apptBadge');
+    if (apptBadge) {
+      apptBadge.textContent = pendingAppts;
+      apptBadge.style.display = pendingAppts > 0 ? '' : 'none';
+    }
+  }
+
   // ============================================
   window.showToast = function(title, message, type = 'success') {
     const container = document.getElementById('toasts');
@@ -515,11 +551,16 @@
     document.getElementById('productCount').textContent = filtered.length + ' productos';
 
     const tbody = document.getElementById('productsTableBody');
-    tbody.innerHTML = filtered.map(p => `
+    tbody.innerHTML = filtered.map(p => {
+      const primaryImg = getProductPrimaryImage(p.id);
+      const imgHtml = primaryImg
+        ? `<img class="admin-table-product-img" src="${primaryImg.image_url}" alt="${p.name}" style="object-fit:cover;">`
+        : `<div class="admin-table-product-img" style="background:linear-gradient(135deg,var(--admin-gold),var(--admin-gold-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">${p.name[0]}</div>`;
+      return `
       <tr>
         <td>
           <div class="admin-table-product">
-            <div class="admin-table-product-img" style="background:linear-gradient(135deg,var(--admin-gold),var(--admin-gold-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">${p.name[0]}</div>
+            ${imgHtml}
             <div><div class="admin-table-product-name">${p.name}</div><div class="admin-table-product-sku">SKU: VN-${String(p.id).padStart(4, '0')}</div></div>
           </div>
         </td>
@@ -529,6 +570,7 @@
         <td>${statusBadge(p.status)}</td>
         <td>
           <div class="admin-table-actions">
+            <button class="admin-table-action" title="Imágenes" onclick="openImageModal(${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
             <button class="admin-table-action" title="Editar" onclick="editProduct(${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
             <button class="admin-table-action" title="Eliminar" onclick="deleteProduct(${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
           </div>
@@ -636,6 +678,29 @@
   // ============================================
   let orderFilter = 'all';
 
+  const STATUS_RANK = { pendiente: 0, confirmado: 1, en_produccion: 2, enviado: 3, entregado: 4 };
+  const STATUS_LABELS = { pendiente: 'Pendiente', confirmado: 'Confirmado', en_produccion: 'En producción', enviado: 'Enviado', entregado: 'Entregado', cancelado: 'Cancelado' };
+  const ALL_STATUSES = ['pendiente', 'confirmado', 'en_produccion', 'enviado', 'entregado', 'cancelado'];
+
+  function getStatusOptions(current) {
+    if (current === 'cancelado' || current === 'entregado') return `<option value="${current}" selected>${STATUS_LABELS[current]}</option>`;
+    const currentRank = STATUS_RANK[current] || 0;
+    return ALL_STATUSES.filter(s => {
+      if (s === current) return true;
+      if (s === 'cancelado') return true;
+      return (STATUS_RANK[s] || 0) > currentRank;
+    }).map(s => `<option value="${s}" ${s === current ? 'selected' : ''}>${STATUS_LABELS[s]}</option>`).join('');
+  }
+
+  window.handleOrderStatusChange = function(id, value) {
+    if (value === 'cancelado') {
+      openCancelModal(id);
+      document.querySelector(`select[onchange*="${id}"]`).value = orders.find(o => o.id === id)?.status || 'pendiente';
+      return;
+    }
+    updateOrderStatus(id, value);
+  };
+
   function renderOrders() {
     let filtered = [...orders];
     if (orderFilter !== 'all') filtered = filtered.filter(o => o.status === orderFilter);
@@ -659,13 +724,8 @@
           <td>
             <div class="admin-table-actions">
               <button class="admin-table-action" title="Ver detalle" onclick="viewOrder('${o.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-               <select class="admin-table-filter" style="padding:4px 8px;font-size:11px;" onchange="if(this.value==='cancelado'){openCancelModal('${o.id}');this.value='${o.status}';}else{updateOrderStatus('${o.id}', this.value)}">
-                <option value="pendiente" ${o.status==='pendiente'?'selected':''}>Pendiente</option>
-                <option value="confirmado" ${o.status==='confirmado'?'selected':''}>Confirmado</option>
-                <option value="en_produccion" ${o.status==='en_produccion'?'selected':''}>En producción</option>
-                <option value="enviado" ${o.status==='enviado'?'selected':''}>Enviado</option>
-                <option value="entregado" ${o.status==='entregado'?'selected':''}>Entregado</option>
-                <option value="cancelado" ${o.status==='cancelado'?'selected':''}>Cancelado</option>
+               <select class="admin-table-filter" style="padding:4px 8px;font-size:11px;" onchange="handleOrderStatusChange('${o.id}', this.value)" data-current="${o.status}">
+                ${getStatusOptions(o.status)}
               </select>
             </div>
           </td>
@@ -728,6 +788,7 @@
 
     showToast('Estado actualizado', `Pedido ${id} ahora: "${status.replace('_', ' ')}"`);
     renderOrders();
+    updateBadges();
   };
 
   window.openCancelModal = function(id) {
@@ -776,8 +837,8 @@
       const settings = await getSettingsForInvoice();
       const products = order.products || [];
       const subtotal = products.reduce((s, p) => s + ((p.price || 0) * (p.qty || 1)), 0);
-      const taxRate = 19;
-      const taxTotal = Math.round(subtotal * taxRate / 100);
+      const taxRate = 0;
+      const taxTotal = 0;
 
       const { data: lastInvoice } = await supabase.from('invoices').select('consecutive').order('consecutive', { ascending: false }).limit(1);
       const nextConsecutive = (lastInvoice?.[0]?.consecutive || 0) + 1;
@@ -810,7 +871,7 @@
         tax_rate: taxRate,
         tax_total: taxTotal,
         discount: 0,
-        total: order.total,
+        total: subtotal,
         payment_method: order.payment || '',
         payment_status: 'pendiente',
         invoice_status: 'emitida',
@@ -1023,6 +1084,7 @@
         appt.status = status;
         await insertActivity('blue', `Cita de ${appt.client_name} → ${status}`);
         renderAppointments();
+        updateBadges();
         showToast('Cita actualizada', `Cita de ${appt.client_name} ahora está "${status}"`);
       }
     }
@@ -1178,7 +1240,6 @@
       </table>
       <div style="margin-left:auto;max-width:300px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Subtotal</span><span>$${(inv.subtotal||0).toLocaleString('es-CO')}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>IVA (${(inv.tax_rate||19).toFixed(0)}%)</span><span>$${(inv.tax_total||0).toLocaleString('es-CO')}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0 0;border-top:3px double #1a1a2e;font-size:16px;font-weight:700;"><span>Total COP</span><span>$${(inv.total||0).toLocaleString('es-CO')}</span></div>
       </div>
       <div style="text-align:center;margin-top:20px;font-size:10px;color:#999;">Factura electrónica válida según normativa DIAN colombiana</div>
@@ -1266,6 +1327,276 @@
     a.href = url; a.download = `${r.title.toLowerCase().replace(/ /g, '_')}_valentina_niebles.csv`; a.click();
     URL.revokeObjectURL(url);
     showToast('Reporte generado', `${r.title} descargado en CSV`);
+  };
+
+  // ============================================
+  // DISCOUNTS
+  // ============================================
+  function renderDiscounts() {
+    const withDiscount = products.filter(p => (p.discount || 0) > 0);
+    document.getElementById('discountCount').textContent = withDiscount.length + ' productos con descuento';
+
+    const tbody = document.getElementById('discountsTableBody');
+    tbody.innerHTML = products.map(p => {
+      const discount = p.discount || 0;
+      const finalPrice = discount > 0 ? Math.round(p.price * (1 - discount / 100)) : p.price;
+      return `
+        <tr>
+          <td><strong style="color:var(--admin-text)">${p.name}</strong></td>
+          <td>${discount > 0 ? `<span style="text-decoration:line-through;color:var(--admin-text-muted);">$${Number(p.price).toLocaleString('es-CO')}</span>` : `$${Number(p.price).toLocaleString('es-CO')}`}</td>
+          <td>${discount > 0 ? `<span class="admin-badge admin-badge-danger">-${discount}%</span>` : '<span style="color:var(--admin-text-muted);">Sin descuento</span>'}</td>
+          <td style="font-weight:700;color:${discount > 0 ? 'var(--admin-green)' : 'var(--admin-text)'};">$${Number(finalPrice).toLocaleString('es-CO')}</td>
+          <td>${discount > 0 ? statusBadge('activo') : statusBadge('inactivo')}</td>
+          <td>
+            <div class="admin-table-actions">
+              <button class="admin-table-action" title="Editar descuento" onclick="openDiscountModal(${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></button>
+              ${discount > 0 ? `<button class="admin-table-action" title="Quitar descuento" onclick="removeDiscount(${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.openDiscountModal = function(id) {
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+    document.getElementById('discountProductId').value = id;
+    document.getElementById('discountProductName').value = p.name;
+    document.getElementById('discountOriginalPrice').value = '$' + Number(p.price).toLocaleString('es-CO');
+    document.getElementById('discountPercent').value = p.discount || 0;
+    document.getElementById('discountModalTitle').textContent = 'Editar Descuento';
+    updateDiscountPreview();
+    document.getElementById('discountModal').classList.add('show');
+  };
+
+  window.closeDiscountModal = function() {
+    document.getElementById('discountModal').classList.remove('show');
+  };
+
+  function updateDiscountPreview() {
+    const id = parseInt(document.getElementById('discountProductId').value);
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+    const percent = parseInt(document.getElementById('discountPercent').value) || 0;
+    const finalPrice = Math.round(p.price * (1 - percent / 100));
+    document.getElementById('discountFinalPrice').textContent = '$' + Number(finalPrice).toLocaleString('es-CO');
+    document.getElementById('discountPreview').style.display = percent > 0 ? '' : 'none';
+  }
+
+  document.addEventListener('input', function(e) {
+    if (e.target.id === 'discountPercent') updateDiscountPreview();
+  });
+
+  window.saveDiscount = async function() {
+    const id = parseInt(document.getElementById('discountProductId').value);
+    const percent = Math.min(100, Math.max(0, parseInt(document.getElementById('discountPercent').value) || 0));
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+
+    const { error } = await supabase.from('products').update({ discount_percentage: percent }).eq('id', id);
+    if (!error) {
+      p.discount = percent;
+      await insertActivity('gold', `Descuento de ${percent}% aplicado a "${p.name}"`);
+      showToast('Descuento guardado', `${p.name} ahora tiene ${percent}% de descuento`);
+      closeDiscountModal();
+      renderDiscounts();
+      renderProducts();
+    }
+  };
+
+  window.removeDiscount = async function(id) {
+    const p = products.find(pr => pr.id === id);
+    if (!p) return;
+    if (!confirm(`¿Quitar el descuento de "${p.name}"?`)) return;
+
+    const { error } = await supabase.from('products').update({ discount_percentage: 0 }).eq('id', id);
+    if (!error) {
+      p.discount = 0;
+      await insertActivity('gold', `Descuento removido de "${p.name}"`);
+      showToast('Descuento removido', `"${p.name}" ya no tiene descuento`);
+      renderDiscounts();
+      renderProducts();
+    }
+  };
+
+  // ============================================
+  // PRODUCT IMAGES
+  // ============================================
+  const MAX_IMAGES = 5;
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  window.openImageModal = function(productId) {
+    const p = products.find(pr => pr.id === productId);
+    if (!p) return;
+    document.getElementById('imageProductId').value = productId;
+    document.getElementById('imageModalTitle').textContent = `Imágenes: ${p.name}`;
+    renderImageGrid(productId);
+    document.getElementById('imageModal').classList.add('show');
+  };
+
+  window.closeImageModal = function() {
+    document.getElementById('imageModal').classList.remove('show');
+    document.getElementById('imageFileInput').value = '';
+  };
+
+  function renderImageGrid(productId) {
+    const imgs = getProductImages(productId);
+    document.getElementById('imageCount').textContent = `${imgs.length} / ${MAX_IMAGES} imágenes`;
+
+    const grid = document.getElementById('imageGrid');
+    if (imgs.length === 0) {
+      grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--admin-text-muted);font-size:13px;grid-column:1/-1;">No hay imágenes. Agrega la primera.</div>';
+      return;
+    }
+
+    grid.innerHTML = imgs.map((img, idx) => `
+      <div style="position:relative;border-radius:8px;overflow:hidden;border:2px solid ${img.is_primary ? 'var(--admin-gold)' : 'var(--admin-border)'};">
+        <img src="${img.image_url}" alt="Imagen ${idx + 1}" style="width:100%;height:120px;object-fit:cover;display:block;">
+        <div style="position:absolute;top:4px;left:4px;display:flex;gap:4px;">
+          ${img.is_primary ? '<span style="background:var(--admin-gold);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">PRINCIPAL</span>' : ''}
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;padding:6px;background:linear-gradient(transparent,rgba(0,0,0,0.7));">
+          ${!img.is_primary ? `<button onclick="setPrimaryImage(${img.id},${productId})" title="Hacer principal" style="background:rgba(255,255,255,0.9);border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;font-weight:600;">Principal</button>` : ''}
+          ${idx > 0 ? `<button onclick="moveImageUp(${img.id},${productId})" title="Mover arriba" style="background:rgba(255,255,255,0.9);border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;">↑</button>` : ''}
+          ${idx < imgs.length - 1 ? `<button onclick="moveImageDown(${img.id},${productId})" title="Mover abajo" style="background:rgba(255,255,255,0.9);border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;">↓</button>` : ''}
+          <button onclick="deleteImage(${img.id},${productId})" title="Eliminar" style="background:rgba(248,113,113,0.9);border:none;border-radius:4px;padding:3px 6px;cursor:pointer;font-size:10px;color:#fff;">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.handleImageUpload = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const productId = parseInt(document.getElementById('imageProductId').value);
+    const currentCount = getProductImages(productId).length;
+
+    if (currentCount >= MAX_IMAGES) {
+      showToast('Límite alcanzado', `Máximo ${MAX_IMAGES} imágenes por producto`, 'warning');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      showToast('Imagen muy pesada', `Máximo ${MAX_FILE_SIZE / 1024 / 1024}MB. La imagen pesa ${(file.size / 1024 / 1024).toFixed(1)}MB`, 'error');
+      event.target.value = '';
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('Formato no válido', 'Solo se permiten JPG, PNG y WebP', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    showToast('Subiendo imagen...', 'Por favor espera', 'info');
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${productId}_${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      if (uploadError.message.includes('not found')) {
+        showToast('Storage no configurado', 'Crea un bucket "product-images" en Supabase Storage', 'error');
+      } else {
+        showToast('Error al subir', uploadError.message, 'error');
+      }
+      event.target.value = '';
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filePath);
+    const imageUrl = urlData.publicUrl;
+
+    const maxOrder = getProductImages(productId).reduce((max, img) => Math.max(max, img.sort_order), -1);
+
+    const { data, error } = await supabase.from('product_images').insert({
+      product_id: productId,
+      image_url: imageUrl,
+      sort_order: maxOrder + 1,
+      is_primary: currentCount === 0
+    }).select().single();
+
+    if (!error && data) {
+      productImages.push(data);
+      renderImageGrid(productId);
+      renderProducts();
+      showToast('Imagen agregada', 'La imagen se subió correctamente');
+    } else {
+      showToast('Error', 'No se pudo guardar la imagen en la base de datos', 'error');
+    }
+
+    event.target.value = '';
+  };
+
+  window.setPrimaryImage = async function(imageId, productId) {
+    const imgs = getProductImages(productId);
+    for (const img of imgs) {
+      await supabase.from('product_images').update({ is_primary: false }).eq('id', img.id);
+    }
+    await supabase.from('product_images').update({ is_primary: true }).eq('id', imageId);
+    await loadProductImages();
+    renderImageGrid(productId);
+    renderProducts();
+    showToast('Imagen principal', 'La imagen principal se actualizó');
+  };
+
+  window.moveImageUp = async function(imageId, productId) {
+    const imgs = getProductImages(productId);
+    const idx = imgs.findIndex(img => img.id === imageId);
+    if (idx <= 0) return;
+
+    const currentOrder = imgs[idx].sort_order;
+    const prevOrder = imgs[idx - 1].sort_order;
+
+    await supabase.from('product_images').update({ sort_order: prevOrder }).eq('id', imageId);
+    await supabase.from('product_images').update({ sort_order: currentOrder }).eq('id', imgs[idx - 1].id);
+
+    await loadProductImages();
+    renderImageGrid(productId);
+    renderProducts();
+  };
+
+  window.moveImageDown = async function(imageId, productId) {
+    const imgs = getProductImages(productId);
+    const idx = imgs.findIndex(img => img.id === imageId);
+    if (idx < 0 || idx >= imgs.length - 1) return;
+
+    const currentOrder = imgs[idx].sort_order;
+    const nextOrder = imgs[idx + 1].sort_order;
+
+    await supabase.from('product_images').update({ sort_order: nextOrder }).eq('id', imageId);
+    await supabase.from('product_images').update({ sort_order: currentOrder }).eq('id', imgs[idx + 1].id);
+
+    await loadProductImages();
+    renderImageGrid(productId);
+    renderProducts();
+  };
+
+  window.deleteImage = async function(imageId, productId) {
+    if (!confirm('¿Eliminar esta imagen?')) return;
+
+    const img = productImages.find(i => i.id === imageId);
+    if (img) {
+      const urlParts = img.image_url.split('/product-images/');
+      if (urlParts.length > 1) {
+        await supabase.storage.from('product-images').remove([urlParts[1]]);
+      }
+    }
+
+    const { error } = await supabase.from('product_images').delete().eq('id', imageId);
+    if (!error) {
+      productImages = productImages.filter(i => i.id !== imageId);
+      renderImageGrid(productId);
+      renderProducts();
+      showToast('Imagen eliminada', 'La imagen se eliminó correctamente');
+    }
   };
 
   // ============================================
@@ -1381,6 +1712,7 @@
     if (!authenticated) return;
 
     await loadAllData();
+    updateBadges();
     renderDashboard();
     renderNotifications();
 
@@ -1413,7 +1745,7 @@
   init();
 
   window.AdminPanel = {
-    getData: () => ({ products, orders, clients, appointments, invoices, notifications, activities }),
+    getData: () => ({ products, orders, clients, appointments, invoices, productImages, notifications, activities }),
     addActivity,
     showToast: window.showToast
   };

@@ -461,6 +461,42 @@ img {
   border-radius: 20px;
 }
 
+.collection-card-discount {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #dc2626;
+  color: var(--white);
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+.collection-card-price {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.collection-card-price-original {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.collection-card-price-final {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
 .collection-card-body {
   padding: 1.5rem;
 }
