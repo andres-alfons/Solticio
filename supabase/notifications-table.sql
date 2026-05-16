@@ -66,7 +66,7 @@ BEGIN
       'order_update',
       'Pedido #' || NEW.id || ' actualizado',
       'Tu pedido ha cambiado a: ' || REPLACE(NEW.status, '_', ' '),
-      '/pedidos.html'
+      '/account/mis-pedidos.html'
     );
   END IF;
   RETURN NEW;
@@ -93,7 +93,7 @@ BEGIN
       'order_update',
       'Pedido #' || NEW.id || ' recibido',
       'Tu pedido por $' || NEW.total || ' ha sido recibido exitosamente.',
-      '/pedidos.html'
+      '/account/mis-pedidos.html'
     );
   END IF;
   RETURN NEW;

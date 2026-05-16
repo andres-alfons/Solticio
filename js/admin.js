@@ -635,12 +635,15 @@
     const tbody = document.getElementById('ordersTableBody');
     tbody.innerHTML = filtered.map(o => {
       const prods = typeof o.products === 'string' ? JSON.parse(o.products) : o.products;
-      const prodNames = Array.isArray(prods) ? prods.map(p => `${p.name || p.nombre || 'Producto'} x${p.qty || 1}`).join(', ') : '';
+      const prodHtml = Array.isArray(prods) ? prods.map(p => {
+        const qty = p.qty || 1;
+        return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--admin-bg-tertiary);border:1px solid var(--admin-border);border-radius:6px;font-size:12px;"><span style="font-weight:600;color:var(--admin-text);">${p.name || p.nombre || 'Producto'}</span><span style="background:var(--admin-gold-bg);color:var(--admin-gold);font-weight:700;padding:1px 6px;border-radius:4px;font-size:11px;">x${qty}</span></span>`;
+      }).join(' ') : '';
       return `
         <tr>
           <td><strong style="color:var(--admin-text)">${o.id}</strong></td>
           <td>${o.client_name}</td>
-          <td>${prodNames}</td>
+          <td><div style="display:flex;flex-wrap:wrap;gap:6px;">${prodHtml}</div></td>
           <td>$${Number(o.total).toLocaleString('es-CO')}</td>
           <td>${o.created_at ? new Date(o.created_at).toLocaleDateString('es-CO') : ''}</td>
           <td>${statusBadge(o.status)}</td>

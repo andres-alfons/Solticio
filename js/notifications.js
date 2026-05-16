@@ -23,6 +23,12 @@ const Notifications = (function() {
     render();
   }
 
+  async function openNotif(id, link) {
+    await DataStore.markNotificationRead(id);
+    render();
+    window.location.href = link;
+  }
+
   async function markAllAsRead() {
     const user = Auth.getCurrentUser();
     if (!user) return;
@@ -75,7 +81,7 @@ const Notifications = (function() {
         ${unread > 0 ? '<button onclick="Notifications.markAllRead()" style="background:none;border:none;color:var(--acc-gold);font-size:12px;cursor:pointer;font-weight:600;">Marcar todo como leido</button>' : ''}
       </div>
       ${notifs.length > 0 ? notifs.map(n => `
-        <div class="account-notif-item ${n.read ? '' : 'unread'}" onclick="Notifications.markAsRead(${n.id})">
+        <div class="account-notif-item ${n.read ? '' : 'unread'}" onclick="Notifications.openNotif(${n.id}, '${n.link || '/account/mis-pedidos.html'}')">
           <div class="account-notif-item-icon" style="background:${bgColors[n.type] || 'var(--acc-bg-card)'}">${icons[n.type] || '📌'}</div>
           <div class="account-notif-item-content">
             <div class="account-notif-item-title">${n.title}</div>
@@ -100,6 +106,7 @@ const Notifications = (function() {
     getUserNotifications,
     getUnreadCount,
     markAsRead,
+    openNotif,
     markAllAsRead,
     render,
     togglePanel,
