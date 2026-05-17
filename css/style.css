@@ -2570,6 +2570,19 @@ img {
   align-items: center;
   justify-content: center;
   padding: 1rem 0.5rem;
+  background: var(--white);
+  color: var(--burgundy);
+  border: 2px solid var(--burgundy);
+}
+
+.p-buy-cart:hover {
+  background: var(--burgundy);
+  color: var(--white);
+}
+
+.p-buy-cart i {
+  font-size: 1.1rem;
+  margin-right: 0;
 }
 
 .p-buy-cart i {

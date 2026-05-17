@@ -1147,8 +1147,7 @@ function updateCartBadge() {
     mobileBadge.style.display = count > 0 ? '' : 'none';
   }
 
-  const dropdown = document.getElementById('cartDropdown');
-  if (dropdown) {
+  if (document.getElementById('cartDropdown')) {
     refreshCartPanel();
   }
 }
@@ -1181,7 +1180,7 @@ function refreshCartPanel() {
       list.innerHTML = '<p class="cart-empty">Tu carrito está vacío</p>';
     } else {
       list.innerHTML = items.map(item => `
-        <div class="cart-item" data-product="${item.productId}" data-size="${item.size}">
+        <div class="cart-item" data-product-id="${item.productId}" data-size="${item.size}">
           <img class="cart-item-img" src="${item.image}" alt="${item.name}" onerror="this.style.background='linear-gradient(135deg,#632432,#D4AF37)';this.src='';">
           <div class="cart-item-info">
             <div class="cart-item-name">${item.name}</div>
@@ -1197,38 +1196,40 @@ function refreshCartPanel() {
         </div>
       `).join('');
 
-      list.querySelectorAll('.cart-minus').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+      list.addEventListener('click', function(e) {
+        const minusBtn = e.target.closest('.cart-minus');
+        const plusBtn = e.target.closest('.cart-plus');
+        const removeBtn = e.target.closest('.cart-item-remove');
+        const cartItem = e.target.closest('.cart-item');
+
+        if (minusBtn) {
           e.stopPropagation();
-          const id = btn.dataset.id;
-          const size = btn.dataset.size;
+          const id = minusBtn.dataset.id;
+          const size = minusBtn.dataset.size;
           const item = Cart.getItems().find(i => i.productId === id && i.size === size);
           if (item) Cart.updateQty(id, size, item.qty - 1);
-        });
-      });
+          return;
+        }
 
-      list.querySelectorAll('.cart-plus').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        if (plusBtn) {
           e.stopPropagation();
-          const id = btn.dataset.id;
-          const size = btn.dataset.size;
+          const id = plusBtn.dataset.id;
+          const size = plusBtn.dataset.size;
           const item = Cart.getItems().find(i => i.productId === id && i.size === size);
           if (item) Cart.updateQty(id, size, Math.min(item.qty + 1, 10));
-        });
-      });
+          return;
+        }
 
-      list.querySelectorAll('.cart-item-remove').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        if (removeBtn) {
           e.stopPropagation();
-          Cart.removeItem(btn.dataset.id, btn.dataset.size);
-        });
-      });
+          Cart.removeItem(removeBtn.dataset.id, removeBtn.dataset.size);
+          return;
+        }
 
-      list.querySelectorAll('.cart-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const name = item.querySelector('.cart-item-name')?.textContent;
+        if (cartItem && !minusBtn && !plusBtn && !removeBtn) {
+          const name = cartItem.querySelector('.cart-item-name')?.textContent;
           if (name) window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
-        });
+        }
       });
     }
   }
@@ -1291,7 +1292,7 @@ function openCartPanel() {
     </div>
     <div class="cart-list">
       ${items.length === 0 ? '<p class="cart-empty">Tu carrito está vacío</p>' : items.map(item => `
-        <div class="cart-item" data-product="${item.productId}" data-size="${item.size}">
+        <div class="cart-item" data-product-id="${item.productId}" data-size="${item.size}">
           <img class="cart-item-img" src="${item.image}" alt="${item.name}" onerror="this.style.background='linear-gradient(135deg,#632432,#D4AF37)';this.src='';">
           <div class="cart-item-info">
             <div class="cart-item-name">${item.name}</div>
@@ -1322,39 +1323,44 @@ function openCartPanel() {
   requestAnimationFrame(() => dropdown.classList.add('active'));
   cartPanelOpen = true;
 
-  dropdown.querySelectorAll('.cart-minus').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      const size = btn.dataset.size;
-      const item = Cart.getItems().find(i => i.productId === id && i.size === size);
-      if (item) Cart.updateQty(id, size, item.qty - 1);
-    });
-  });
+  const list = dropdown.querySelector('.cart-list');
+  if (list) {
+    list.addEventListener('click', function(e) {
+      const minusBtn = e.target.closest('.cart-minus');
+      const plusBtn = e.target.closest('.cart-plus');
+      const removeBtn = e.target.closest('.cart-item-remove');
+      const cartItem = e.target.closest('.cart-item');
 
-  dropdown.querySelectorAll('.cart-plus').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      const size = btn.dataset.size;
-      const item = Cart.getItems().find(i => i.productId === id && i.size === size);
-      if (item) Cart.updateQty(id, size, Math.min(item.qty + 1, 10));
-    });
-  });
+      if (minusBtn) {
+        e.stopPropagation();
+        const id = minusBtn.dataset.id;
+        const size = minusBtn.dataset.size;
+        const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+        if (item) Cart.updateQty(id, size, item.qty - 1);
+        return;
+      }
 
-  dropdown.querySelectorAll('.cart-item-remove').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      Cart.removeItem(btn.dataset.id, btn.dataset.size);
-    });
-  });
+      if (plusBtn) {
+        e.stopPropagation();
+        const id = plusBtn.dataset.id;
+        const size = plusBtn.dataset.size;
+        const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+        if (item) Cart.updateQty(id, size, Math.min(item.qty + 1, 10));
+        return;
+      }
 
-  dropdown.querySelectorAll('.cart-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const name = item.querySelector('.cart-item-name')?.textContent;
-      if (name) window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
+      if (removeBtn) {
+        e.stopPropagation();
+        Cart.removeItem(removeBtn.dataset.id, removeBtn.dataset.size);
+        return;
+      }
+
+      if (cartItem && !minusBtn && !plusBtn && !removeBtn) {
+        const name = cartItem.querySelector('.cart-item-name')?.textContent;
+        if (name) window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
+      }
     });
-  });
+  }
 
   document.getElementById('clearCart')?.addEventListener('click', () => {
     Cart.clear();
