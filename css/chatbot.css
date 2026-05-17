@@ -727,10 +727,24 @@
 .vn-proactive-btn:hover { opacity: 0.9; }
 
 @media (max-width: 480px) {
-  .vn-proactive-toast {
-    bottom: 5rem;
-    right: 1rem;
-    width: calc(100vw - 2rem);
+  .vn-chat-toggle {
+    bottom: 5.5rem;
+    right: 1.2rem;
+    width: 48px;
+    height: 48px;
   }
+
+  .vn-chat-toggle-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .vn-chat-panel {
+    width: calc(100vw - 1rem);
+    right: 0.5rem;
+    left: 0.5rem;
+    bottom: 5rem;
+  }
+}
 }
 

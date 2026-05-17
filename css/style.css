@@ -1297,6 +1297,7 @@ img {
   }
 
   .nav-links .mobile-auth-section {
+    display: block;
     margin-top: auto;
     padding-top: 1rem;
     border-top: 2px solid rgba(212, 175, 55, 0.15);
@@ -1530,6 +1531,25 @@ img {
   .payment-methods { grid-template-columns: 1fr; }
 
   .nav-links { width: 100%; }
+
+  .wsp-container {
+    bottom: 1rem;
+    right: 1.2rem;
+  }
+
+  .wsp-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .wsp-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .wsp-tooltip {
+    display: none;
+  }
 }
 
 /* ======================== CUSTOM SCROLLBAR ======================== */

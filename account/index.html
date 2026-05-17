@@ -12,7 +12,7 @@
     <div class="account-sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="account-sidebar" id="sidebar">
       <div class="account-sidebar-header">
-        <div class="account-sidebar-close" onclick="closeSidebar()">
+        <div class="account-sidebar-close" id="sidebarCloseBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </div>
         <div class="account-sidebar-logo">VALENTINA NIEBLES</div>
@@ -275,6 +275,14 @@
         overlay.addEventListener('click', () => {
           document.getElementById('sidebar').classList.remove('open');
           overlay.classList.remove('active');
+        });
+      }
+
+      const closeBtn = document.getElementById('sidebarCloseBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          document.getElementById('sidebar').classList.remove('open');
+          overlay?.classList.remove('active');
         });
       }
 

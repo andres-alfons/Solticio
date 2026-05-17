@@ -1787,6 +1787,11 @@
         overlay.addEventListener('click', closeSidebar);
       }
 
+      const closeBtn = document.getElementById('sidebarCloseBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeSidebar);
+      }
+
       document.querySelectorAll('.admin-nav-item').forEach(item => {
         item.addEventListener('click', () => {
           if (window.innerWidth <= 768) {
