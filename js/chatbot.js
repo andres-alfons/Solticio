@@ -379,35 +379,6 @@
 
     return intents;
   }
-    if (/envio|entrega|despacho|shipping|llega|cuando llega/.test(text)) intents.push('shipping');
-    if (/pago|pagar|tarjeta|paypal|transfer|contra entrega|cuanto es|precio|costo|valor/.test(text)) intents.push('payment');
-    if (/devolucion|cambio|garantia|reembolso|return/.test(text)) intents.push('returns');
-    if (/tendencia|trend|moda|nuevo|nueva coleccion|que se usa|actual|lo ultimo/.test(text)) intents.push('trends');
-    if (/outfit|combinar|combinacion|look|conjunto completo|que me pongo|como combino|armar look/.test(text)) intents.push('outfit');
-    if (/fiesta|boda|matrimonio|gala|evento|graduacion|formal|noche|quince/.test(text)) intents.push('event');
-    if (/color|colores|favorecen|tono de piel|piel calida|piel fria|estacion/.test(text)) intents.push('color_analysis');
-    if (/descuento|promo|cupon|oferta|codigo|barato|rebaja/.test(text)) intents.push('discount');
-    if (/whatsapp|contacto|comunicar|llamar|email|correo|telefono|donde estan/.test(text)) intents.push('contact');
-    if (/horario|hora|atienden|abierto|cuando|direccion|ubicacion/.test(text)) intents.push('info');
-    if (/gracias|thank|genial|perfecto|excelente|maravilloso|increible|me encanta/.test(text)) intents.push('thanks');
-    if (/chao|adios|bye|hasta luego|nos vemos|me voy|hasta pronto/.test(text)) intents.push('goodbye');
-    if (/me recomiend|que me queda|que me sirve|cual me favorece|cual escojo|ayudame a elegir|que me pongo|suger|asesor/.test(text)) intents.push('recommendation');
-    if (/tipo de cuerpo|mi cuerpo|mi figura|silueta|reloj|triangulo|rectangulo/.test(text)) intents.push('body_analysis');
-    if (/mi estilo|que estilo|estilo personal|como me describo|personalidad de moda/.test(text)) intents.push('style_quiz');
-    if (/presupuesto|budget|cuanto tengo|barato|economico|accesible|rango/.test(text)) intents.push('budget');
-    if (/asesoria|asesor|personal shopper|consultoria/.test(text)) intents.push('personal_shopper');
-    if (/noviedad|nuevo lanzamiento|recien llegado|ultima coleccion/.test(text)) intents.push('new_arrivals');
-
-    if (intents.length === 0) {
-      // Try to understand conversational input
-      if (/si|claro|por supuesto|dale|vamos|ok|bueno|perfecto|me gusta|si porfa/.test(text)) intents.push('affirmative');
-      else if (/no|nop|negativo|no quiero|no gracias|mejor no/.test(text)) intents.push('negative');
-      else if (/no se|no estoy segura|no tengo idea|ayudame|orientame/.test(text)) intents.push('needs_help');
-      else intents.push('general');
-    }
-
-    return intents;
-  }
 
   function generateResponse(intents, text, raw) {
     // Priority handling
