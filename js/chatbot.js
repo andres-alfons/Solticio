@@ -1389,11 +1389,6 @@
   }
 
   async function init() {
-    try {
-      await loadChatbotImages();
-    } catch(e) {
-      console.warn('Chatbot images failed to load:', e);
-    }
     loadState();
     initDOM();
     if (!chatbotEl || !toggleBtn) {
@@ -1401,6 +1396,11 @@
       return;
     }
     setupEventListeners();
+    try {
+      await loadChatbotImages();
+    } catch(e) {
+      console.warn('Chatbot images failed to load:', e);
+    }
     if (state.context.isReturningClient) {
       const badge = toggleBtn.querySelector('.vn-notification-badge');
       if (badge) { badge.style.display = 'flex'; badge.textContent = '✨'; }
