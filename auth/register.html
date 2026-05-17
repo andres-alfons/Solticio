@@ -183,11 +183,12 @@
           successEl.classList.add('show');
           btn.textContent = 'Crear Cuenta';
           btn.disabled = false;
+          setTimeout(() => { window.location.href = 'login.html'; }, 2000);
         } else {
           successEl.textContent = 'Cuenta creada exitosamente. Redirigiendo...';
           successEl.classList.add('show');
           setTimeout(() => {
-            window.location.href = '../index.html';
+            window.location.href = 'login.html';
           }, 1500);
         }
       } else {

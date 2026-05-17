@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
+DROP POLICY IF EXISTS "Service role can manage all profiles" ON profiles;
 
 -- Profiles: users can read their own profile
 CREATE POLICY "Users can view own profile"
@@ -31,6 +32,16 @@ CREATE POLICY "Service role can manage all profiles"
   USING (true)
   WITH CHECK (true);
 
+-- Function to check if email exists (accessible to anonymous users for registration)
+CREATE OR REPLACE FUNCTION public.check_email_exists(p_email text)
+RETURNS boolean AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE email = p_email);
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+-- Grant anonymous users permission to call the email check function
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO authenticated;
+
 -- Fix is_admin function to handle RLS properly
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean AS $$
@@ -45,3 +56,9 @@ DROP POLICY IF EXISTS "Users can insert own notifications" ON notifications;
 CREATE POLICY "Users can insert own notifications"
   ON notifications FOR INSERT
   WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+
+-- Ensure notifications policy allows admins to insert notifications
+DROP POLICY IF EXISTS "Admins can insert notifications" ON notifications;
+CREATE POLICY "Admins can insert notifications"
+  ON notifications FOR INSERT
+  WITH CHECK (public.is_admin());

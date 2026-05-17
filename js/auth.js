@@ -122,9 +122,19 @@ const Auth = (function() {
     async signUp(name, email, password, phone = '') {
       if (!supabase) return { success: false, error: 'Supabase no configurado' };
 
+      const normalizedEmail = email.trim().toLowerCase();
+
       try {
+        // Verificar si el correo ya existe usando la función segura
+        const { data: emailExists, error: checkError } = await supabase
+          .rpc('check_email_exists', { p_email: normalizedEmail });
+
+        if (emailExists) {
+          return { success: false, error: 'Este correo ya está registrado. Intenta iniciar sesión.' };
+        }
+
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
+          email: normalizedEmail,
           password,
           options: {
             data: {
@@ -167,7 +177,6 @@ const Auth = (function() {
                 read: false
               });
           } catch (notifErr) {
-            // Si hay conflicto (409), probablemente la notificación ya existe
             if (!notifErr.message.includes('duplicate') && !notifErr.message.includes('409') && notifErr.status !== 409) {
               console.warn('No se pudo crear la notificación de bienvenida:', notifErr.message);
             }
