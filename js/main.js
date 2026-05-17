@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initProductPage();
   initChatbot();
   initNotifications();
+  initCart();
   updateAuthUI();
   updateProductPrices();
 });
@@ -487,12 +488,9 @@ async function initProductPage() {
   document.getElementById('qtyPlus').addEventListener('click', () => { if (qty < 10) { qty++; document.getElementById('pQty').value = qty; } });
 
   document.getElementById('btnComprar').addEventListener('click', () => {
-    if (!Auth.isLoggedIn()) {
-      showToast('Iniciar sesión requerido', 'Debes iniciar sesión para realizar una compra', 'warning');
-      setTimeout(() => { window.location.href = 'auth/login.html'; }, 1500);
-      return;
-    }
-    openPaymentModal(product);
+    const size = document.getElementById('pSize')?.value || 'M';
+    Cart.addItem(product, size, qty);
+    showToast('Añadido al carrito', `${product.name} (Talla: ${size}, Cant: ${qty})`, 'success');
   });
 }
 
@@ -891,6 +889,7 @@ async function initNotifications() {
   window.addEventListener('auth:change', () => updateBadges());
 
   function handleNotifClick() {
+    if (cartPanelOpen) return;
     const user = Auth.getCurrentUser();
     if (!user) {
       window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.pathname);
@@ -907,6 +906,8 @@ async function initNotifications() {
 async function showNotificationsDropdown(user) {
   const existing = document.getElementById('notifDropdown');
   if (existing) existing.remove();
+
+  closeCartPanel();
 
   const allNotifs = await DataStore.getNotifications(user.id);
   const userNotifs = allNotifs.sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
@@ -935,11 +936,13 @@ async function showNotificationsDropdown(user) {
 
   document.body.appendChild(dropdown);
   requestAnimationFrame(() => dropdown.classList.add('active'));
+  notifPanelOpen = true;
 
   dropdown.querySelector('#markAllRead')?.addEventListener('click', async () => {
     await DataStore.markAllNotificationsRead(user.id);
     initNotifications();
     dropdown.remove();
+    notifPanelOpen = false;
   });
 
   dropdown.querySelectorAll('.notif-item').forEach(item => {
@@ -957,7 +960,7 @@ async function showNotificationsDropdown(user) {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#notifBell') && !e.target.closest('#notifDropdown') && !e.target.closest('#mobileNotifBell')) {
       dropdown.classList.remove('active');
-      setTimeout(() => dropdown.remove(), 300);
+      setTimeout(() => { dropdown.remove(); notifPanelOpen = false; }, 300);
     }
   }, { once: true });
 }
@@ -1049,4 +1052,329 @@ async function initOrderTracking() {
       <div class="tracking-estimate"><i class="bi bi-clock"></i> Entrega estimada: <strong>${formattedEst}</strong> (14 días hábiles)</div>
     </div>`;
   }).join('');
+}
+
+/* ======================== CART ======================== */
+let cartPanelOpen = false;
+let notifPanelOpen = false;
+
+function initCart() {
+  const cartBell = document.getElementById('cartBell');
+  const mobileCartBell = document.getElementById('mobileCartBell');
+  if (!cartBell && !mobileCartBell) return;
+
+  updateCartBadge();
+
+  window.addEventListener('cart:change', () => updateCartBadge());
+
+  if (cartBell) {
+    cartBell.addEventListener('click', () => {
+      if (notifPanelOpen) return;
+      toggleCartPanel();
+    });
+  }
+
+  if (mobileCartBell) {
+    mobileCartBell.addEventListener('click', () => {
+      if (notifPanelOpen) return;
+      toggleCartPanel();
+      closeMobileMenu();
+    });
+  }
+}
+
+function updateCartBadge() {
+  const badge = document.getElementById('cartBadge');
+  const mobileBadge = document.getElementById('mobileCartBadge');
+  const count = Cart.getCount();
+  if (badge) {
+    badge.textContent = count > 9 ? '9+' : count;
+    badge.style.display = count > 0 ? '' : 'none';
+  }
+  if (mobileBadge) {
+    mobileBadge.textContent = count > 9 ? '9+' : count;
+    mobileBadge.style.display = count > 0 ? '' : 'none';
+  }
+}
+
+function toggleCartPanel() {
+  const existing = document.getElementById('cartDropdown');
+  if (existing) {
+    closeCartPanel();
+    return;
+  }
+  openCartPanel();
+}
+
+function openCartPanel() {
+  const existing = document.getElementById('notifDropdown');
+  if (existing) {
+    existing.remove();
+    notifPanelOpen = false;
+  }
+
+  const items = Cart.getItems();
+  const total = Cart.getTotal();
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'cartDropdown';
+  dropdown.className = 'cart-dropdown';
+  dropdown.innerHTML = `
+    <div class="cart-header">
+      <h3>Mi Carrito (${Cart.getCount()})</h3>
+      ${items.length > 0 ? `<button id="clearCart"><i class="bi bi-trash"></i> Vaciar</button>` : ''}
+    </div>
+    <div class="cart-list">
+      ${items.length === 0 ? '<p class="cart-empty">Tu carrito está vacío</p>' : items.map(item => `
+        <div class="cart-item" data-product="${item.productId}" data-size="${item.size}">
+          <img class="cart-item-img" src="${item.image}" alt="${item.name}" onerror="this.style.background='linear-gradient(135deg,#632432,#D4AF37)';this.src='';">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-details">Talla: ${item.size} · ${item.priceFormatted}</div>
+            <div class="cart-item-actions">
+              <button class="cart-qty-btn cart-minus" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-dash"></i></button>
+              <span class="cart-qty">${item.qty}</span>
+              <button class="cart-qty-btn cart-plus" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-plus"></i></button>
+              <span class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-CO')}</span>
+              <button class="cart-item-remove" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-x"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ${items.length > 0 ? `
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span class="cart-total-label">Total</span>
+          <span class="cart-total-value">$${total.toLocaleString('es-CO')}</span>
+        </div>
+        <button class="cart-checkout-btn" id="cartCheckoutBtn"><i class="bi bi-lock-fill"></i> Proceder con el Pago</button>
+      </div>
+    ` : ''}
+  `;
+
+  document.body.appendChild(dropdown);
+  requestAnimationFrame(() => dropdown.classList.add('active'));
+  cartPanelOpen = true;
+
+  dropdown.querySelectorAll('.cart-minus').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const size = btn.dataset.size;
+      const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+      if (item) Cart.updateQty(id, size, item.qty - 1);
+      openCartPanel();
+    });
+  });
+
+  dropdown.querySelectorAll('.cart-plus').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const size = btn.dataset.size;
+      const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+      if (item) Cart.updateQty(id, size, item.qty + 1);
+      openCartPanel();
+    });
+  });
+
+  dropdown.querySelectorAll('.cart-item-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Cart.removeItem(btn.dataset.id, btn.dataset.size);
+      openCartPanel();
+    });
+  });
+
+  dropdown.querySelectorAll('.cart-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const name = item.querySelector('.cart-item-name')?.textContent;
+      if (name) window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
+    });
+  });
+
+  document.getElementById('clearCart')?.addEventListener('click', () => {
+    Cart.clear();
+    openCartPanel();
+  });
+
+  document.getElementById('cartCheckoutBtn')?.addEventListener('click', () => {
+    closeCartPanel();
+    openCartCheckout();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#cartBell') && !e.target.closest('#cartDropdown') && !e.target.closest('#mobileCartBell')) {
+      closeCartPanel();
+    }
+  }, { once: true });
+}
+
+function closeCartPanel() {
+  const dropdown = document.getElementById('cartDropdown');
+  if (dropdown) {
+    dropdown.classList.remove('active');
+    setTimeout(() => { dropdown.remove(); cartPanelOpen = false; }, 300);
+  }
+  cartPanelOpen = false;
+}
+
+function openCartCheckout() {
+  const items = Cart.getItems();
+  if (items.length === 0) return;
+
+  const total = Cart.getTotal();
+
+  removeExistingModal();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal payment-modal">
+      <button class="modal-close"><i class="bi bi-x-lg"></i></button>
+      <div class="payment-container">
+        <p class="section-subtitle" style="text-align:left;">Finalizar Compra</p>
+        <h2 style="font-size:2rem;margin-bottom:1.5rem;">Datos de Pago</h2>
+
+        <div class="payment-summary" style="flex-direction:column;align-items:flex-start;">
+          ${items.map(item => `
+            <div style="display:flex;gap:0.8rem;align-items:center;width:100%;${items.indexOf(item) < items.length - 1 ? 'padding-bottom:0.8rem;border-bottom:1px solid rgba(212,175,55,0.2);margin-bottom:0.8rem;' : ''}">
+              <img src="${item.image}" alt="${item.name}" onerror="this.style.background='linear-gradient(135deg,#632432,#D4AF37)';this.src='';" style="width:50px;height:65px;object-fit:cover;border-radius:6px;">
+              <div style="flex:1;">
+                <h4 style="font-size:0.9rem;">${item.name}</h4>
+                <p style="font-size:0.75rem;color:var(--text-light);margin:0;">Talla: ${item.size} · Cant: ${item.qty}</p>
+              </div>
+              <span style="color:var(--gold);font-weight:700;font-size:0.85rem;">$${(item.price * item.qty).toLocaleString('es-CO')}</span>
+            </div>
+          `).join('')}
+          <div style="display:flex;justify-content:space-between;width:100%;margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid rgba(212,175,55,0.3);">
+            <span style="font-weight:700;font-size:0.9rem;">Total</span>
+            <span style="color:var(--gold);font-weight:700;font-size:1.1rem;">$${total.toLocaleString('es-CO')}</span>
+          </div>
+        </div>
+
+        <form id="paymentForm" style="display:flex;flex-direction:column;gap:1.1rem;">
+          <div class="modal-form-row">
+            <div><label>Nombre Completo</label><input type="text" id="payName" placeholder="Tu nombre" required></div>
+            <div><label>Correo</label><input type="email" id="payEmail" placeholder="tucorreo@email.com" required></div>
+          </div>
+          <div class="modal-form-row">
+            <div>
+              <label>Teléfono</label>
+              <div style="display:flex;gap:6px;">
+                <select id="payPhoneCode" style="width:100px;padding:10px 8px;background:var(--modal-bg, #1a1a2e);border:1px solid var(--modal-border, #333);border-radius:8px;color:var(--modal-text, #fff);font-size:13px;appearance:auto;">
+                  <option value="+57">+57 🇨🇴</option>
+                  <option value="+54">+54 🇦🇷</option>
+                  <option value="+591">+591 🇧🇴</option>
+                  <option value="+56">+56 🇨🇱</option>
+                  <option value="+593">+593 🇪🇨</option>
+                  <option value="+52">+52 🇲🇽</option>
+                  <option value="+595">+595 🇵🇾</option>
+                  <option value="+51">+51 🇵🇪</option>
+                  <option value="+598">+598 🇺🇾</option>
+                  <option value="+58">+58 🇻🇪</option>
+                  <option value="+1">+1 🇺🇸</option>
+                  <option value="+34">+34 🇪🇸</option>
+                </select>
+                <input type="tel" id="payPhone" placeholder="300 000 0000" maxlength="10" style="flex:1;" required>
+              </div>
+            </div>
+            <div><label>Documento</label><input type="text" id="payDoc" placeholder="CC / NIT" required></div>
+          </div>
+          <div class="form-field"><label>Dirección de Envío</label><input type="text" id="payAddress" placeholder="Dirección completa" required></div>
+
+          <div class="form-field">
+            <label>Método de Pago</label>
+            <div class="payment-methods" id="payMethods">
+              <div class="payment-method selected" data-method="transferencia"><i class="bi bi-bank"></i> Transferencia</div>
+              <div class="payment-method" data-method="nequi"><i class="bi bi-phone"></i> Nequi</div>
+              <div class="payment-method" data-method="efectivo"><i class="bi bi-cash"></i> Efectivo</div>
+            </div>
+          </div>
+
+          <button type="submit" class="modal-submit"><i class="bi bi-lock-fill"></i> Pagar y Confirmar Pedido</button>
+        </form>
+
+        <div class="modal-success" id="paySuccess">
+          <i class="bi bi-check-circle-fill"></i>
+          <h3>¡Pedido Confirmado!</h3>
+          <p>Tu pedido ha sido registrado exitosamente.</p>
+          <span class="order-id" id="orderIdDisplay"></span>
+          <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:1rem;">Te enviaremos actualizaciones a tu correo.</p>
+          <a href="account/mis-pedidos.html" class="btn btn-primary"><i class="bi bi-truck"></i> Ver Mis Pedidos</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => overlay.classList.add('active'));
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+
+  overlay.querySelectorAll('#payMethods .payment-method').forEach(method => {
+    method.addEventListener('click', () => {
+      overlay.querySelectorAll('#payMethods .payment-method').forEach(m => m.classList.remove('selected'));
+      method.classList.add('selected');
+    });
+  });
+
+  overlay.querySelector('#paymentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payment = overlay.querySelector('#payMethods .payment-method.selected')?.dataset.method || 'transferencia';
+    const orderId = 'VN-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase();
+
+    const cartItems = Cart.getItems();
+    const products = cartItems.map(item => ({
+      name: item.name,
+      qty: item.qty,
+      price: item.price,
+      size: item.size,
+      color: ''
+    }));
+
+    const currentUser = Auth.getCurrentUser();
+    const orderData = {
+      id: orderId,
+      userId: currentUser ? currentUser.id : null,
+      client: overlay.querySelector('#payName').value,
+      email: currentUser ? currentUser.email : overlay.querySelector('#payEmail').value,
+      phone: (overlay.querySelector('#payPhoneCode')?.value || '+57') + ' ' + (overlay.querySelector('#payPhone')?.value || ''),
+      doc: overlay.querySelector('#payDoc')?.value || '',
+      products: products,
+      total: total,
+      status: 'pendiente',
+      payment,
+      address: overlay.querySelector('#payAddress').value,
+      notes: 'Pedido desde carrito',
+      tracking: '',
+      carrier: ''
+    };
+
+    await DataStore.createOrder(orderData);
+
+    if (currentUser) {
+      await DataStore.createNotification({
+        userId: currentUser.id,
+        type: 'order_update',
+        title: 'Pedido Confirmado!',
+        message: `Tu pedido #${orderId} ha sido registrado.`,
+        read: false
+      });
+    }
+
+    Cart.clear();
+
+    overlay.querySelector('#paymentForm').style.display = 'none';
+    const success = overlay.querySelector('#paySuccess');
+    success.classList.add('active');
+    overlay.querySelector('#orderIdDisplay').textContent = '#' + orderId;
+
+    const productNames = products.map(p => p.name).join(', ');
+    const msg = `Hola Valentina! Acabo de realizar un pedido:\n- ${productNames}\n- Pedido: #${orderId}\n- Pago: ${payment}\n- Total: $${total.toLocaleString('es-CO')}`;
+    window.open(`https://wa.me/573245947260?text=${encodeURIComponent(msg)}`, '_blank');
+  });
 }

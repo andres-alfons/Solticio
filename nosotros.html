@@ -44,6 +44,11 @@
           <i class="bi bi-bell"></i> Notificaciones
           <span class="mobile-notif-badge" id="mobileNotifBadge" style="display:none;"></span>
         </button>
+        <button class="mobile-notif-bell" id="mobileCartBell">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          Mi Carrito
+          <span class="mobile-notif-badge" id="mobileCartBadge" style="display:none;"></span>
+        </button>
       </li>
     </ul>
     <div class="nav-login">
@@ -55,7 +60,7 @@
         <img class="login-avatar" src="" alt="">
         <span class="login-name"></span>
       </div>
-      <button class="notif-bell" id="notifBell" aria-label="Notificaciones"><i class="bi bi-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></button>
+      <button class="cart-bell" id="cartBell" aria-label="Carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge" id="cartBadge" style="display:none;"></span></button><button class="notif-bell" id="notifBell" aria-label="Notificaciones"><i class="bi bi-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></button>
     </div>
     <div class="nav-toggle">
       <span></span>
@@ -182,7 +187,7 @@
 <script src="js/data-store.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/notifications.js"></script>
-<script src="js/main.js"></script>
+<script src="js/cart.js"></script><script src="js/main.js"></script>
 <div id="vn-chatbot" class="vn-chatbot-closed">
   <button id="vn-chat-toggle" class="vn-chat-toggle" aria-label="Abrir asistente virtual">
     <span class="vn-chat-toggle-icon">
