@@ -726,10 +726,10 @@
 
 .vn-proactive-btn:hover { opacity: 0.9; }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .vn-chat-toggle {
-    bottom: 5.5rem;
-    right: 1.2rem;
+    bottom: 80px !important;
+    right: 16px !important;
     width: 48px;
     height: 48px;
   }
@@ -743,8 +743,28 @@
     width: calc(100vw - 1rem);
     right: 0.5rem;
     left: 0.5rem;
-    bottom: 5rem;
+    bottom: 80px;
   }
 }
+
+@media (max-width: 480px) {
+  .vn-chat-toggle {
+    bottom: 80px !important;
+    right: 16px !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .vn-chat-toggle-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .vn-chat-panel {
+    width: calc(100vw - 1rem);
+    right: 0.5rem;
+    left: 0.5rem;
+    bottom: 80px;
+  }
 }
 

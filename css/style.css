@@ -1515,6 +1515,27 @@ img {
   .notif-dropdown { width: 90%; right: 5%; top: 55px; }
 }
 
+@media (max-width: 768px) {
+  .wsp-container {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+
+  .wsp-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .wsp-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .wsp-tooltip {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .hero-title { font-size: 3rem; }
   .section-title { font-size: 2rem; }
@@ -1533,13 +1554,13 @@ img {
   .nav-links { width: 100%; }
 
   .wsp-container {
-    bottom: 1rem;
-    right: 1.2rem;
+    bottom: 16px !important;
+    right: 16px !important;
   }
 
   .wsp-btn {
-    width: 48px;
-    height: 48px;
+    width: 48px !important;
+    height: 48px !important;
   }
 
   .wsp-btn svg {
