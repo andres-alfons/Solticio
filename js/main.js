@@ -1387,6 +1387,12 @@ function closeCartPanel() {
 }
 
 function openCartCheckout() {
+  if (!Auth.isLoggedIn()) {
+    showToast('Iniciar sesión requerido', 'Debes crear una cuenta o iniciar sesión para completar tu compra', 'warning');
+    setTimeout(() => { window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.pathname); }, 1500);
+    return;
+  }
+
   const items = Cart.getItems();
   if (items.length === 0) return;
 

@@ -175,10 +175,18 @@
     if (!messagesEl) return;
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
-    const name = state.clientData.name;
-    const isReturning = state.context.isReturningClient;
 
-    if (isReturning && name) {
+    let name = null;
+    try {
+      if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+        const user = Auth.getCurrentUser();
+        if (user) name = user.name;
+      }
+    } catch(e) {}
+
+    const isReturning = state.context.isReturningClient && name;
+
+    if (isReturning) {
       const prefs = state.context.userPreferences;
       let personal = "";
       if (prefs.style) personal += `Recuerdo que tu estilo es *${prefs.style}*. `;
@@ -750,7 +758,13 @@
   function handleGreeting() {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
-    const name = state.clientData.name ? `, ${state.clientData.name}` : '';
+    let name = '';
+    try {
+      if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+        const user = Auth.getCurrentUser();
+        if (user) name = `, ${user.name}`;
+      }
+    } catch(e) {}
     return {
       message: `${greeting}${name} ✨\n\n¡Bienvenida al atelier de Valentina Niebles! Soy tu asesora de moda personal. ¿En qué puedo ayudarte hoy?`,
       quickReplies: ["Ver colección", "Mi asesoría personal", "Prenda personalizada", "Agendar cita", "¿Qué está en tendencia?"]
@@ -1174,7 +1188,13 @@
   }
 
   function handleGoodbye() {
-    const name = state.clientData.name ? `, ${state.clientData.name}` : '';
+    let name = '';
+    try {
+      if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+        const user = Auth.getCurrentUser();
+        if (user) name = `, ${user.name}`;
+      }
+    } catch(e) {}
     return { message: `¡Hasta pronto${name}! 💕\n\nEn Valentina Niebles siempre tendrás un lugar especial. ¡Que la moda te acompañe! ✨`, quickReplies: [] };
   }
 
