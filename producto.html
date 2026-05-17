@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -21,6 +21,29 @@
       <li><a href="agendar.html"><i class="bi bi-calendar-heart"></i> Agendar Cita</a></li>
       <li><a href="nosotros.html"><i class="bi bi-person-heart"></i> Nosotros</a></li>
       <li><a href="contacto.html"><i class="bi bi-chat-dots"></i> Contacto</a></li>
+      <li class="mobile-auth-section">
+        <a href="auth/login.html" class="mobile-auth-btn" id="mobileLoginBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Iniciar Sesión
+        </a>
+        <div class="mobile-user-display" id="mobileUserDisplay">
+          <img src="" alt="" id="mobileUserAvatar">
+          <span class="mobile-user-name" id="mobileUserName"></span>
+          <i class="bi bi-chevron-down mobile-user-arrow"></i>
+        </div>
+        <div class="mobile-user-menu" id="mobileUserMenu">
+          <a href="account/index.html"><i class="bi bi-person"></i> Mi Cuenta</a>
+          <a href="account/mis-pedidos.html"><i class="bi bi-truck"></i> Mis Pedidos</a>
+          <a href="account/mis-compras.html"><i class="bi bi-bag"></i> Mis Compras</a>
+          <a href="account/mis-citas.html"><i class="bi bi-calendar-check"></i> Mis Citas</a>
+          <a href="admin/index.html" id="mobileAdminLink" style="display:none;"><i class="bi bi-shield-check"></i> Panel Admin</a>
+          <button class="mobile-logout" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+        </div>
+        <button class="mobile-notif-bell" id="mobileNotifBell">
+          <i class="bi bi-bell"></i> Notificaciones
+          <span class="mobile-notif-badge" id="mobileNotifBadge" style="display:none;"></span>
+        </button>
+      </li>
     </ul>
     <div class="nav-login">
       <a href="auth/login.html" class="nav-login-btn">

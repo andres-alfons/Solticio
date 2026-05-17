@@ -9,6 +9,7 @@
 </head>
 <body>
   <div class="account-layout">
+    <div class="account-sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="account-sidebar" id="sidebar">
       <div class="account-sidebar-header">
         <div class="account-sidebar-logo">VALENTINA NIEBLES</div>
@@ -52,6 +53,9 @@
 
     <main class="account-main">
       <header class="account-header">
+        <button class="account-header-btn account-menu-btn" onclick="toggleSidebar()" style="display:none" id="menuBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <h1 class="account-header-title">Mi Cuenta</h1>
         <div class="account-header-right">
           <a href="../index.html" style="color:var(--acc-text-secondary);text-decoration:none;font-size:13px;">
@@ -241,6 +245,45 @@
       }
 
       Notifications.render();
+
+      // Mobile sidebar
+      const checkWidth = () => {
+        const menuBtn = document.getElementById('menuBtn');
+        if (window.innerWidth <= 768) {
+          menuBtn.style.display = 'flex';
+        } else {
+          menuBtn.style.display = 'none';
+          document.getElementById('sidebar').classList.remove('open');
+          const overlay = document.getElementById('sidebarOverlay');
+          if (overlay) overlay.classList.remove('active');
+        }
+      };
+      checkWidth();
+      window.addEventListener('resize', checkWidth);
+
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) {
+        overlay.addEventListener('click', () => {
+          document.getElementById('sidebar').classList.remove('open');
+          overlay.classList.remove('active');
+        });
+      }
+
+      window.toggleSidebar = function() {
+        document.getElementById('sidebar').classList.toggle('open');
+        overlay?.classList.toggle('active');
+      };
+
+      document.querySelectorAll('.account-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            setTimeout(() => {
+              document.getElementById('sidebar').classList.remove('open');
+              overlay?.classList.remove('active');
+            }, 150);
+          }
+        });
+      });
     })();
   </script>
 <script>function handleLogout(e){e.preventDefault();Auth.signOut();setTimeout(function(){window.location.href="../index.html";},300);}</script>

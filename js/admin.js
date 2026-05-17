@@ -1709,8 +1709,20 @@
   }
 
   window.toggleSidebar = function() {
-    document.getElementById('sidebar').classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
   };
+
+  function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+  }
+
+  window.closeSidebar = closeSidebar;
 
   window.toggleUserMenu = function() {};
 
@@ -1756,10 +1768,25 @@
         } else {
           menuBtn.style.display = 'none';
           document.getElementById('sidebar').classList.remove('open');
+          const overlay = document.getElementById('sidebarOverlay');
+          if (overlay) overlay.classList.remove('active');
         }
       };
       checkWidth();
       window.addEventListener('resize', checkWidth);
+
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) {
+        overlay.addEventListener('click', closeSidebar);
+      }
+
+      document.querySelectorAll('.admin-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            setTimeout(closeSidebar, 150);
+          }
+        });
+      });
 
       let resizeTimer;
       window.addEventListener('resize', () => {
