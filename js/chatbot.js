@@ -110,7 +110,8 @@
       isReturningClient: false,
       conversationCount: 0,
       topicsDiscussed: [],
-      sentiment: 'neutral'
+      sentiment: 'neutral',
+      lastCompletedFlow: null
     },
     clientData: {
       name: null,
@@ -334,6 +335,38 @@
     if (/mi estilo|que estilo|estilo personal|como me describo|personalidad de moda/.test(text)) intents.push('style_quiz');
     if (/presupuesto|budget|cuanto tengo|barato|economico|accesible|rango/.test(text)) intents.push('budget');
     if (/asesoria|asesor|personal shopper|consultoria/.test(text)) intents.push('personal_shopper');
+    if (/novedad|nuevo lanzamiento|recien llegado|ultima coleccion/.test(text)) intents.push('new_arrivals');
+    if (/cotiz|cotizar|precio final|cuanto cuesta/.test(text)) intents.push('quote');
+    if (/piezas similares|algo similar|parecido|otro parecido|mas como ese|semejante/.test(text)) intents.push('similar');
+    if (/como combinar|como lo uso|con que lo combino|combinacion/.test(text)) intents.push('how_to_combine');
+    if (/ver mas|mas detalles|mas info|detalles|ver detalle/.test(text)) intents.push('details');
+
+    if (intents.length === 0) {
+      if (/si|claro|por supuesto|dale|vamos|ok|bueno|si porfa/.test(text)) intents.push('affirmative');
+      else if (/no|nop|negativo|no quiero|no gracias|mejor no/.test(text)) intents.push('negative');
+      else if (/no se|no estoy segura|no tengo idea|ayudame|orientame/.test(text)) intents.push('needs_help');
+      else intents.push('general');
+    }
+
+    return intents;
+  }
+    if (/envio|entrega|despacho|shipping|llega|cuando llega/.test(text)) intents.push('shipping');
+    if (/pago|pagar|tarjeta|paypal|transfer|contra entrega|cuanto es|precio|costo|valor/.test(text)) intents.push('payment');
+    if (/devolucion|cambio|garantia|reembolso|return/.test(text)) intents.push('returns');
+    if (/tendencia|trend|moda|nuevo|nueva coleccion|que se usa|actual|lo ultimo/.test(text)) intents.push('trends');
+    if (/outfit|combinar|combinacion|look|conjunto completo|que me pongo|como combino|armar look/.test(text)) intents.push('outfit');
+    if (/fiesta|boda|matrimonio|gala|evento|graduacion|formal|noche|quince/.test(text)) intents.push('event');
+    if (/color|colores|favorecen|tono de piel|piel calida|piel fria|estacion/.test(text)) intents.push('color_analysis');
+    if (/descuento|promo|cupon|oferta|codigo|barato|rebaja/.test(text)) intents.push('discount');
+    if (/whatsapp|contacto|comunicar|llamar|email|correo|telefono|donde estan/.test(text)) intents.push('contact');
+    if (/horario|hora|atienden|abierto|cuando|direccion|ubicacion/.test(text)) intents.push('info');
+    if (/gracias|thank|genial|perfecto|excelente|maravilloso|increible|me encanta/.test(text)) intents.push('thanks');
+    if (/chao|adios|bye|hasta luego|nos vemos|me voy|hasta pronto/.test(text)) intents.push('goodbye');
+    if (/me recomiend|que me queda|que me sirve|cual me favorece|cual escojo|ayudame a elegir|que me pongo|suger|asesor/.test(text)) intents.push('recommendation');
+    if (/tipo de cuerpo|mi cuerpo|mi figura|silueta|reloj|triangulo|rectangulo/.test(text)) intents.push('body_analysis');
+    if (/mi estilo|que estilo|estilo personal|como me describo|personalidad de moda/.test(text)) intents.push('style_quiz');
+    if (/presupuesto|budget|cuanto tengo|barato|economico|accesible|rango/.test(text)) intents.push('budget');
+    if (/asesoria|asesor|personal shopper|consultoria/.test(text)) intents.push('personal_shopper');
     if (/noviedad|nuevo lanzamiento|recien llegado|ultima coleccion/.test(text)) intents.push('new_arrivals');
 
     if (intents.length === 0) {
@@ -349,6 +382,10 @@
 
   function generateResponse(intents, text, raw) {
     // Priority handling
+    if (intents.includes('quote')) return handleQuote();
+    if (intents.includes('similar')) return handleSimilarPieces();
+    if (intents.includes('how_to_combine')) return handleHowToCombine();
+    if (intents.includes('details')) return handleDetails();
     if (intents.includes('greeting')) return handleGreeting();
     if (intents.includes('recommendation')) return handleSmartRecommendation(text, raw);
     if (intents.includes('body_analysis')) return startBodyAnalysis();
@@ -489,10 +526,15 @@
 
       case 'custom_details':
         state.context.userPreferences.customDetails = raw;
+        state.context.lastCompletedFlow = 'custom';
         state.context.currentFlow = null;
         const summary = buildCustomSummary();
         saveState();
         return { message: `✨ ¡Tu diseño personalizado está listo para cotizar!\n\n${summary}\n\nPara finalizar tu diseño, Valentina necesita revisar los detalles personalmente. ¿Quieres agendar una cita de diseño?`, quickReplies: ["Sí, agendar cita", "Solo quiero cotizar", "Modificar algo"] };
+
+      case 'custom_modify':
+        state.context.currentFlow = 'custom_color';
+        return { message: "✂️ ¿Qué quieres cambiar?\n\n🎨 Color\n🎯 Ocasión\n💰 Presupuesto\n📝 Detalles\n\nDime qué ajustar." };
 
       case 'appt_type':
         const types = [
@@ -998,13 +1040,130 @@
     };
   }
 
+  function handleQuote() {
+    const prefs = state.context.userPreferences;
+    if (prefs.customDetails) {
+      const summary = buildCustomSummary();
+      return {
+        message: `📋 *Cotización de tu diseño personalizado:*\n\n${summary}\n\nValentina revisará los detalles y te contactará con el precio exacto. Mientras tanto, ¿quieres hablar con ella directamente?`,
+        quickReplies: ["Contactar por WhatsApp", "Ver colección", "Otra consulta"]
+      };
+    }
+    return {
+      message: "💰 Para darte una cotización, necesito saber qué prenda te interesa.\n\n¿Es algo de la colección o un diseño personalizado?",
+      quickReplies: ["Ver colección", "Diseño personalizado", "Hablar con Valentina"]
+    };
+  }
+
+  function handleSimilarPieces() {
+    const prefs = state.context.userPreferences;
+    let baseProduct = null;
+
+    if (prefs.lastProductShown) {
+      baseProduct = PRODUCTS.find(p => p.nombre.toLowerCase() === prefs.lastProductShown);
+    }
+
+    if (baseProduct) {
+      const similar = PRODUCTS.filter(p => p.id !== baseProduct.id && (
+        p.tags.some(t => baseProduct.tags.includes(t)) ||
+        p.ocasiones.some(o => baseProduct.ocasiones.includes(o)) ||
+        p.colores.some(c => baseProduct.colores.includes(c))
+      )).slice(0, 3);
+
+      if (similar.length > 0) {
+        let msg = `✨ *Piezas similares a ${baseProduct.nombre}:*\n\n`;
+        let extra = '';
+        similar.forEach(p => {
+          msg += `💎 *${p.nombre}* - ${p.precioStr}\n${p.desc}\n\n`;
+          extra += renderProductCard(p);
+        });
+        msg += "¿Alguna te llama la atención?";
+        return { message: msg, extra, quickReplies: ["Más detalles", "Outfit completo", "Ver toda la colección"] };
+      }
+    }
+
+    const recs = PRODUCTS.slice(0, 3);
+    let msg = "✨ *Piezas que podrían gustarte:*\n\n";
+    let extra = '';
+    recs.forEach(p => {
+      msg += `💎 *${p.nombre}* - ${p.precioStr}\n${p.desc}\n\n`;
+      extra += renderProductCard(p);
+    });
+    return { message: msg, extra, quickReplies: ["Más detalles", "Outfit completo", "Ver toda la colección"] };
+  }
+
+  function handleHowToCombine() {
+    const prefs = state.context.userPreferences;
+    let baseProduct = prefs.lastProductShown ? PRODUCTS.find(p => p.nombre.toLowerCase() === prefs.lastProductShown) : null;
+
+    if (baseProduct) {
+      const outfitKey = Object.keys(OUTFITS).find(k => OUTFITS[k].piezas.includes(baseProduct.id));
+      if (outfitKey) {
+        const outfit = OUTFITS[outfitKey];
+        const piezas = outfit.piezas.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+        let extra = '';
+        let msg = `👗 *Cómo combinar ${baseProduct.nombre}:*\n\n${outfit.msg}\n\n`;
+        piezas.forEach(p => { msg += `✨ *${p.nombre}* - ${p.precioStr}\n${p.desc}\n\n`; extra += renderProductCard(p); });
+        const total = piezas.reduce((sum, p) => sum + p.precio, 0);
+        msg += `💰 Total del look: *$${total.toLocaleString('es-CO')}*`;
+        return { message: msg, extra, quickReplies: ["Me encanta", "Otro look", "Ver colección"] };
+      }
+    }
+
+    return {
+      message: "👗 *¿Qué prenda quieres combinar?*\n\nDime el nombre y te armo un look completo.",
+      quickReplies: ["Aurora", "Esmeralda", "Noche Eterna", "Real", "Sol", "Luna"]
+    };
+  }
+
+  function handleDetails() {
+    const prefs = state.context.userPreferences;
+    let product = prefs.lastProductShown ? PRODUCTS.find(p => p.nombre.toLowerCase() === prefs.lastProductShown) : null;
+
+    if (product) {
+      return {
+        message: `✨ *${product.nombre}*\n\n${product.tipo} · ${product.precioStr}\n\n${product.desc}\n\n🎨 Colores disponibles: ${product.colores.join(', ')}\n✂️ Silueta: ${product.silueta}\n🎯 Ideal para: ${product.ocasiones.join(', ')}\n📅 Temporada: ${product.temporada}\n\n¿Te gustaría ver cómo combinarla?`,
+        quickReplies: ["Cómo combinarla", "Piezas similares", "Añadir al carrito", "Otra prenda"]
+      };
+    }
+
+    return {
+      message: "¿De qué prenda quieres saber más detalles?",
+      quickReplies: ["Aurora", "Esmeralda", "Noche Eterna", "Real", "Sol", "Luna"]
+    };
+  }
+
   function handleGoodbye() {
     const name = state.clientData.name ? `, ${state.clientData.name}` : '';
     return { message: `¡Hasta pronto${name}! 💕\n\nEn Valentina Niebles siempre tendrás un lugar especial. ¡Que la moda te acompañe! ✨`, quickReplies: [] };
   }
 
   function handleAffirmative() {
-    return { message: "¡Perfecto! 😊 ¿En qué te puedo ayudar?", quickReplies: ["Ver colección", "Mi asesoría personal", "Prenda personalizada", "Agendar cita"] };
+    const lastBotMsg = state.context.conversationHistory.filter(m => m.role === 'bot').pop();
+    const lastText = lastBotMsg ? normalize(lastBotMsg.text) : '';
+
+    if (/agendar cita|cita de disen|agendar una cita/.test(lastText)) {
+      return handleAppointment();
+    }
+
+    if (/analisis|analizame|tipo de cuerpo|estilo personal|estacion de color/.test(lastText)) {
+      return {
+        message: "¡Empecemos! 💫 ¿Qué análisis prefieres?",
+        quickReplies: ["Analizar mi cuerpo", "Analizar mi estilo", "Analizar mis colores"]
+      };
+    }
+
+    if (/analiza|conocerte|mejores recomendaciones/.test(lastText)) {
+      return {
+        message: "¡Perfecto! 💫 ¿Por cuál empezamos?",
+        quickReplies: ["Analizar mi cuerpo", "Analizar mi estilo", "Analizar mis colores"]
+      };
+    }
+
+    return {
+      message: "¡Genial! ✨ ¿En qué te puedo ayudar?",
+      quickReplies: ["Ver colección", "Mi asesoría personal", "Prenda personalizada", "Agendar cita"]
+    };
   }
 
   function handleNegative() {
@@ -1020,19 +1179,32 @@
 
   function handleConversational(raw) {
     const t = normalize(raw);
-    const prefs = state.context.userPreferences;
 
-    // Context-aware responses
-    if (/soy|tengo|mido|peso|mi/.test(t)) {
-      return {
-        message: `Gracias por compartir eso conmigo 💕\n\nCada detalle me ayuda a darte mejores recomendaciones. ¿Te gustaría que haga un análisis completo de qué prendas te favorecen más?`,
-        quickReplies: ["Sí, analízame", "Solo ver ropa", "Tengo otra pregunta"]
-      };
+    if (/solo quiero|solo necesito|solo busco/.test(t)) {
+      if (/cotiz/.test(t)) return handleQuote();
+      if (/ver|mirar|coleccion/.test(t)) return handleViewAll();
+      if (/pregunt|info|saber/.test(t)) return { message: "¡Claro! Pregúntame lo que necesites 💕", quickReplies: ["Envíos", "Pagos", "Tallas", "Materiales"] };
     }
 
-    if (/bonita|bonito|hermosa|linda|me gusta|quiero|amo|encanta/.test(t)) {
+    if (/modificar|cambiar|ajustar|corregir/.test(t)) {
+      state.context.currentFlow = 'custom_color';
+      return { message: "✂️ ¿Qué quieres cambiar?\n\n🎨 Color\n🎯 Ocasión\n💰 Presupuesto\n📝 Detalles\n\nDime qué ajustar." };
+    }
+
+    if (/bonita|bonito|hermosa|linda|me gusta|amo|encanta/.test(t)) {
+      const lastUserMsg = state.context.conversationHistory.filter(m => m.role === 'user').pop();
+      if (lastUserMsg) {
+        const mentionedProduct = PRODUCTS.find(p => lastUserMsg.text.toLowerCase().includes(p.nombre.toLowerCase()));
+        if (mentionedProduct) {
+          state.context.userPreferences.lastProductShown = mentionedProduct.nombre.toLowerCase();
+          return {
+            message: `¡Tienes un gusto increíble! ✨ *${mentionedProduct.nombre}* es una de nuestras piezas más especiales.\n\n¿Quieres ver cómo combinarla o piezas similares?`,
+            quickReplies: ["Cómo combinarla", "Piezas similares", "Ver más"]
+          };
+        }
+      }
       return {
-        message: "¡Tienes un gusto increíble! ✨\n\nEsa pieza es una de nuestras favoritas también. ¿Quieres que te sugiera cómo combinarla o ver piezas similares?",
+        message: "¡Me alegra que te guste! ✨ ¿Quieres que te sugiera cómo combinarla o ver piezas similares?",
         quickReplies: ["Cómo combinarla", "Piezas similares", "Ver más"]
       };
     }
@@ -1051,7 +1223,14 @@
       };
     }
 
-    // Default conversational
+    const prefs = state.context.userPreferences;
+    if (/soy|tengo|mido|peso|mi/.test(t)) {
+      return {
+        message: `Gracias por compartir eso conmigo 💕\n\nCada detalle me ayuda a darte mejores recomendaciones. ¿Te gustaría que haga un análisis completo de qué prendas te favorecen más?`,
+        quickReplies: ["Sí, analízame", "Solo ver ropa", "Tengo otra pregunta"]
+      };
+    }
+
     const responses = [
       `Entiendo lo que dices 💫 Para darte la mejor asesoría, ¿te gustaría que analicemos tu estilo y tipo de cuerpo? Así te recomiendo exactamente lo que te favorece.`,
       `¡Me encanta que estés aquí! 🌟 Cuéntame más: ¿buscas algo para un evento especial o para tu día a día?`,
