@@ -1293,6 +1293,9 @@ img {
   .nav-close-mobile {
     display: none;
   }
+  .mobile-auth-section {
+    display: none;
+  }
 }
 
   .nav-links .mobile-auth-section {
