@@ -1234,7 +1234,7 @@ img {
     -webkit-backdrop-filter: blur(20px);
     flex-direction: column;
     justify-content: flex-start;
-    padding: 5rem 1.5rem 2rem;
+    padding: 5rem 1.5rem 1rem;
     gap: 0;
     transition: right var(--transition);
     box-shadow: var(--shadow-lg);
@@ -1246,7 +1246,7 @@ img {
     right: 0;
   }
 
-  .nav-links a {
+  .nav-links > li > a {
     color: var(--text-dark);
     font-size: 0.75rem;
     letter-spacing: 0.08em;
@@ -1256,13 +1256,27 @@ img {
     display: block;
   }
 
-  .nav-links a i {
+  .nav-links > li > a i {
     font-size: 0.85rem;
     margin-right: 0.4rem;
   }
 
-  .nav-links a:hover,
-  .nav-links a.active {
+  .nav-links > li > a:hover,
+  .nav-links > li > a.active {
+    color: var(--burgundy);
+  }
+
+  .nav-close-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0.5rem 0 1rem;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 1.2rem;
+  }
+
+  .nav-close-mobile:hover {
     color: var(--burgundy);
   }
 
@@ -1273,11 +1287,18 @@ img {
   .nav-login {
     display: none;
   }
+}
+
+@media (min-width: 1101px) {
+  .nav-close-mobile {
+    display: none;
+  }
+}
 
   .nav-links .mobile-auth-section {
-    margin-top: 1rem;
+    margin-top: auto;
     padding-top: 1rem;
-    border-top: 2px solid rgba(212, 175, 55, 0.2);
+    border-top: 2px solid rgba(212, 175, 55, 0.15);
     width: 100%;
   }
 
@@ -1293,7 +1314,6 @@ img {
     text-transform: uppercase;
     color: var(--burgundy);
     text-decoration: none;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
     width: 100%;
   }
 
@@ -1308,8 +1328,8 @@ img {
     gap: 0.6rem;
     padding: 0.8rem 0;
     cursor: pointer;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
     width: 100%;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
   }
 
   .mobile-user-display.active {
@@ -1317,11 +1337,12 @@ img {
   }
 
   .mobile-user-display img {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 1.5px solid var(--gold);
     object-fit: cover;
+    flex-shrink: 0;
   }
 
   .mobile-user-display .mobile-user-name {
@@ -1330,12 +1351,16 @@ img {
     font-weight: 600;
     color: var(--burgundy);
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .mobile-user-display .mobile-user-arrow {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-light);
     transition: transform 0.3s ease;
+    flex-shrink: 0;
   }
 
   .mobile-user-display.open .mobile-user-arrow {
@@ -1367,8 +1392,10 @@ img {
   }
 
   .mobile-user-menu a i {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--gold);
+    width: 18px;
+    text-align: center;
   }
 
   .mobile-user-menu .mobile-logout {
@@ -1383,10 +1410,16 @@ img {
     padding: 0.7rem 0;
     width: 100%;
     text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .mobile-user-menu .mobile-logout i {
     color: #ef4444;
+    width: 18px;
+    text-align: center;
+    font-size: 0.85rem;
   }
 
   .mobile-notif-bell {
@@ -1406,16 +1439,18 @@ img {
   }
 
   .mobile-notif-bell i {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--burgundy);
+    width: 18px;
+    text-align: center;
   }
 
   .mobile-notif-badge {
     background: #ef4444;
     color: white;
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     font-weight: 700;
-    padding: 0.1rem 0.4rem;
+    padding: 0.1rem 0.35rem;
     border-radius: 10px;
     margin-left: auto;
   }

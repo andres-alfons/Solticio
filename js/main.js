@@ -142,6 +142,13 @@ function initNavbar() {
     closeMobileMenu();
   });
 
+  const closeBtn = links.querySelector('.nav-close-mobile');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      closeMobileMenu();
+    });
+  }
+
   const currentPath = window.location.pathname.split('/').pop() || 'index.html';
   links.querySelectorAll('a').forEach(a => {
     const href = a.getAttribute('href');

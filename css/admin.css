@@ -254,6 +254,33 @@ body {
 .admin-sidebar-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--admin-border);
+  position: relative;
+}
+
+.admin-sidebar-close {
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  transition: all 0.2s ease;
+}
+
+.admin-sidebar-close:hover {
+  background: rgba(255,255,255,0.2);
+  color: var(--admin-text);
+}
+
+.admin-sidebar-close svg {
+  width: 16px;
+  height: 16px;
 }
 
 .admin-sidebar-header h2 {
@@ -1209,6 +1236,9 @@ body {
   }
   .admin-header-breadcrumb {
     font-size: 0.7rem;
+  }
+  .admin-sidebar-close {
+    display: flex;
   }
 }
 

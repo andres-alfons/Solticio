@@ -63,8 +63,35 @@ body {
 }
 
 .account-sidebar-header {
-  padding: 24px;
+  padding: 20px;
   border-bottom: 1px solid var(--acc-border);
+  position: relative;
+}
+
+.account-sidebar-close {
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--acc-text-muted);
+  transition: all 0.2s ease;
+}
+
+.account-sidebar-close:hover {
+  background: rgba(255,255,255,0.2);
+  color: var(--acc-text);
+}
+
+.account-sidebar-close svg {
+  width: 16px;
+  height: 16px;
 }
 
 .account-sidebar-logo {
@@ -684,6 +711,9 @@ body {
    }
    .account-header {
      gap: 0.8rem;
+   }
+   .account-sidebar-close {
+     display: flex;
    }
  }
 

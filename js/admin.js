@@ -1763,15 +1763,22 @@
 
       const checkWidth = () => {
         const menuBtn = document.getElementById('menuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
         if (window.innerWidth <= 768) {
           menuBtn.style.display = 'flex';
         } else {
           menuBtn.style.display = 'none';
-          document.getElementById('sidebar').classList.remove('open');
-          const overlay = document.getElementById('sidebarOverlay');
+          sidebar.classList.remove('open');
           if (overlay) overlay.classList.remove('active');
         }
       };
+      // Ensure sidebar is closed on initial load on mobile
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (overlay) overlay.classList.remove('active');
+      }
       checkWidth();
       window.addEventListener('resize', checkWidth);
 
