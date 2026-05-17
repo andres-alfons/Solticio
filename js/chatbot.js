@@ -25,16 +25,18 @@
   // Cargar imágenes desde Supabase
   async function loadChatbotImages() {
     try {
+      if (typeof getSupabase !== 'function') return;
       const supabase = getSupabase();
-      const { data: images } = await supabase
+      if (!supabase) return;
+      const { data: images, error: imgError } = await supabase
         .from('product_images')
         .select('product_id, image_url, is_primary')
         .eq('is_primary', true);
 
-      if (!images) return;
+      if (imgError || !images) return;
 
-      const { data: products } = await supabase.from('products').select('id, name');
-      if (!products) return;
+      const { data: products, error: prodError } = await supabase.from('products').select('id, name');
+      if (prodError || !products) return;
 
       const nameToImage = {};
       products.forEach(p => {
@@ -158,17 +160,19 @@
   }
 
   function toggleChat() {
+    if (!chatbotEl || !toggleBtn) return;
     state.isOpen = !state.isOpen;
     chatbotEl.classList.toggle('vn-chatbot-open', state.isOpen);
     if (state.isOpen) {
-      inputEl.focus();
+      if (inputEl) inputEl.focus();
       const badge = toggleBtn.querySelector('.vn-notification-badge');
       if (badge) badge.style.display = 'none';
-      if (messagesEl.children.length === 0) showWelcome();
+      if (messagesEl && messagesEl.children.length === 0) showWelcome();
     }
   }
 
   function showWelcome() {
+    if (!messagesEl) return;
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
     const name = state.clientData.name;
@@ -191,6 +195,7 @@
   }
 
   function addBotMessage(text, extra = null) {
+    if (!messagesEl) return;
     const time = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
     const formatted = text.replace(/\n/g, '<br>').replace(/\*(.*?)\*/g, '<strong>$1</strong>');
     const msgEl = document.createElement('div');
@@ -203,6 +208,7 @@
   }
 
   function addUserMessage(text) {
+    if (!messagesEl) return;
     const time = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
     const msgEl = document.createElement('div');
     msgEl.className = 'vn-message vn-message-user';
@@ -215,6 +221,7 @@
   }
 
   function showTyping() {
+    if (!messagesEl) return;
     removeTyping();
     const el = document.createElement('div');
     el.className = 'vn-message vn-message-bot';
@@ -228,6 +235,7 @@
   function removeTyping() { const el = document.getElementById('vn-typing'); if (el) el.remove(); }
 
   function showQuickReplies(replies) {
+    if (!quickRepliesEl) return;
     quickRepliesEl.innerHTML = '';
     replies.forEach(r => {
       const btn = document.createElement('button');
@@ -238,10 +246,28 @@
     });
   }
 
-  function scrollToBottom() { setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50); }
+  function scrollToBottom() { setTimeout(() => { if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight; }, 50); }
   function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
   function normalize(t) { return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); }
+
+  function isLoggedIn() {
+    try {
+      return typeof Auth !== 'undefined' && Auth.isLoggedIn();
+    } catch(e) {
+      return false;
+    }
+  }
+
+  function requireAuth() {
+    if (!isLoggedIn()) {
+      return {
+        message: "Para realizar esta acción necesitas tener una cuenta 💕\n\nInicia sesión o regístrate para poder agendar citas, hacer pedidos o acceder a tu asesoría personalizada.\n\n¿Quieres ir a iniciar sesión?",
+        quickReplies: ["Iniciar sesión", "Registrarme", "Seguir viendo"]
+      };
+    }
+    return null;
+  }
 
   function renderProductCard(p) {
     return `<div class="vn-product-card"><img class="vn-product-card-img" src="${p.img}" alt="${p.nombre}" onerror="this.style.background='linear-gradient(135deg,#c9a96e,#a07d3f)';this.style.minHeight='140px';"><div class="vn-product-card-body"><p class="vn-product-card-title">${p.nombre}</p><p style="font-size:12px;color:#6b6b6b;margin:0 0 4px;">${p.tipo}</p><p class="vn-product-card-price">${p.precioStr}</p><a href="producto.html?id=${p.id}" class="vn-product-card-btn">Ver Detalles</a></div></div>`;
@@ -340,6 +366,9 @@
     if (/piezas similares|algo similar|parecido|otro parecido|mas como ese|semejante/.test(text)) intents.push('similar');
     if (/como combinar|como lo uso|con que lo combino|combinacion/.test(text)) intents.push('how_to_combine');
     if (/ver mas|mas detalles|mas info|detalles|ver detalle/.test(text)) intents.push('details');
+    if (/iniciar sesion|login|entrar|acceder/.test(text)) intents.push('login');
+    if (/registrarme|crear cuenta|sign up|registrar/.test(text)) intents.push('register');
+    if (/seguir viendo|seguir|solo mirar|sin cuenta/.test(text)) intents.push('continue_browsing');
 
     if (intents.length === 0) {
       if (/si|claro|por supuesto|dale|vamos|ok|bueno|si porfa/.test(text)) intents.push('affirmative');
@@ -386,6 +415,9 @@
     if (intents.includes('similar')) return handleSimilarPieces();
     if (intents.includes('how_to_combine')) return handleHowToCombine();
     if (intents.includes('details')) return handleDetails();
+    if (intents.includes('login')) return handleLogin();
+    if (intents.includes('register')) return handleRegister();
+    if (intents.includes('continue_browsing')) return handleContinueBrowsing();
     if (intents.includes('greeting')) return handleGreeting();
     if (intents.includes('recommendation')) return handleSmartRecommendation(text, raw);
     if (intents.includes('body_analysis')) return startBodyAnalysis();
@@ -879,6 +911,9 @@
   }
 
   function handleCustomClothing() {
+    const authCheck = requireAuth();
+    if (authCheck) return authCheck;
+
     state.context.currentFlow = 'custom_color';
     return {
       message: "✂️ *Diseño Personalizado*\n\n¡Me encanta que quieras algo único! En Valentina Niebles creamos piezas exclusivas solo para ti.\n\nEmpecemos:\n\n🎨 ¿Qué color o colores imaginas para tu prenda?",
@@ -887,6 +922,9 @@
   }
 
   function handleAppointment() {
+    const authCheck = requireAuth();
+    if (authCheck) return authCheck;
+
     state.context.currentFlow = 'appt_type';
     return {
       message: "📅 *Agendar Cita*\n\n¿Qué tipo de cita necesitas?\n\n• Diseño Personalizado (60 min)\n• Toma de Medidas (30 min)\n• Asesoría de Moda (45 min)\n• Prueba de Vestuario (45 min)",
@@ -895,6 +933,9 @@
   }
 
   function handleOrderTracking() {
+    const authCheck = requireAuth();
+    if (authCheck) return authCheck;
+
     const orders = state.clientData.orderHistory;
     if (orders.length > 0) {
       let msg = "📦 *Tus pedidos:*\n\n";
@@ -973,6 +1014,31 @@
     };
   }
 
+  function handleLogin() {
+    const currentPath = window.location.pathname;
+    return {
+      message: "¡Vamos! 💫 Inicia sesión para acceder a todas las funciones:\n\n• Agendar citas\n• Hacer pedidos\n• Tu asesoría personalizada\n• Seguimiento de pedidos\n\nTe redirijo ahora...",
+      quickReplies: [],
+      redirect: 'auth/login.html?redirect=' + encodeURIComponent(currentPath)
+    };
+  }
+
+  function handleRegister() {
+    const currentPath = window.location.pathname;
+    return {
+      message: "¡Crear tu cuenta es rápido! 💫\n\nSolo necesitas tu nombre, email y una contraseña. Te redirijo ahora...",
+      quickReplies: [],
+      redirect: 'auth/register.html?redirect=' + encodeURIComponent(currentPath)
+    };
+  }
+
+  function handleContinueBrowsing() {
+    return {
+      message: "¡Claro! Puedes seguir explorando sin cuenta 💕\n\nSi en algún momento quieres agendar una cita o hacer un pedido, solo necesitas iniciar sesión.\n\n¿Qué te gustaría ver?",
+      quickReplies: ["Ver colección", "Tendencias", "Descuentos", "Materiales"]
+    };
+  }
+
   function handleInfo(text) {
     if (/horario|hora|abierto/.test(text)) return { message: "🕐 *Horario:*\n\nLun-Vie: 9:00 AM - 6:00 PM\nSábados: 10:00 AM - 3:00 PM\nDomingos: Cerrado\n\nPero yo estoy aquí 24/7 ✨", quickReplies: ["Agendar cita", "Ver colección"] };
     if (/ubicacion|donde|direccion/.test(text)) return { message: `📍 Estamos en ${BRAND.location}.\n\nTambién ofrecemos citas virtuales para asesorías de moda. ¿Quieres agendar una?`, quickReplies: ["Cita virtual", "Cita presencial"] };
@@ -1041,6 +1107,9 @@
   }
 
   function handleQuote() {
+    const authCheck = requireAuth();
+    if (authCheck) return authCheck;
+
     const prefs = state.context.userPreferences;
     if (prefs.customDetails) {
       const summary = buildCustomSummary();
@@ -1160,6 +1229,13 @@
       };
     }
 
+    if (/iniciar sesion|registrarme/.test(lastText)) {
+      return {
+        message: "¡Genial! ✨ ¿En qué te puedo ayudar?",
+        quickReplies: ["Ver colección", "Mi asesoría personal", "Prenda personalizada", "Agendar cita"]
+      };
+    }
+
     return {
       message: "¡Genial! ✨ ¿En qué te puedo ayudar?",
       quickReplies: ["Ver colección", "Mi asesoría personal", "Prenda personalizada", "Agendar cita"]
@@ -1167,6 +1243,16 @@
   }
 
   function handleNegative() {
+    const lastBotMsg = state.context.conversationHistory.filter(m => m.role === 'bot').pop();
+    const lastText = lastBotMsg ? normalize(lastBotMsg.text) : '';
+
+    if (/iniciar sesion|registrarme|tener una cuenta/.test(lastText)) {
+      return {
+        message: "Sin problema ✨ Puedes seguir explorando la colección sin cuenta. Si en algún momento quieres agendar una cita o hacer un pedido, aquí estaré.",
+        quickReplies: ["Ver colección", "Tendencias", "Descuentos"]
+      };
+    }
+
     return { message: "Sin problema ✨ Si cambias de opinión, aquí estaré. ¿Hay algo más en lo que pueda ayudarte?", quickReplies: ["Ver colección", "Otra consulta"] };
   }
 
@@ -1249,7 +1335,7 @@
   function handleUserInput(text) {
     if (!text.trim()) return;
     addUserMessage(text);
-    quickRepliesEl.innerHTML = '';
+    if (quickRepliesEl) quickRepliesEl.innerHTML = '';
     showTyping();
 
     const delay = 600 + Math.random() * 800;
@@ -1261,25 +1347,28 @@
         if (response.quickReplies && response.quickReplies.length > 0) {
           setTimeout(() => showQuickReplies(response.quickReplies), 300);
         }
+        if (response.redirect) {
+          setTimeout(() => { window.location.href = response.redirect; }, 1500);
+        }
       }
       saveState();
     }, delay);
   }
 
   function setupEventListeners() {
-    toggleBtn.addEventListener('click', toggleChat);
-    minimizeBtn.addEventListener('click', toggleChat);
-    sendBtn.addEventListener('click', () => {
+    if (toggleBtn) toggleBtn.addEventListener('click', toggleChat);
+    if (minimizeBtn) minimizeBtn.addEventListener('click', toggleChat);
+    if (sendBtn) sendBtn.addEventListener('click', () => {
       const t = inputEl.value.trim();
       if (t) { inputEl.value = ''; handleUserInput(t); }
     });
-    inputEl.addEventListener('keypress', (e) => {
+    if (inputEl) inputEl.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         const t = inputEl.value.trim();
         if (t) { inputEl.value = ''; handleUserInput(t); }
       }
     });
-    messagesEl.addEventListener('click', (e) => {
+    if (messagesEl) messagesEl.addEventListener('click', (e) => {
       if (e.target.classList.contains('vn-schedule-slot')) {
         const v = e.target.dataset.day || e.target.dataset.time;
         if (v) handleUserInput(v);
@@ -1300,9 +1389,17 @@
   }
 
   async function init() {
-    await loadChatbotImages();
+    try {
+      await loadChatbotImages();
+    } catch(e) {
+      console.warn('Chatbot images failed to load:', e);
+    }
     loadState();
     initDOM();
+    if (!chatbotEl || !toggleBtn) {
+      console.warn('Chatbot DOM elements not found');
+      return;
+    }
     setupEventListeners();
     if (state.context.isReturningClient) {
       const badge = toggleBtn.querySelector('.vn-notification-badge');
