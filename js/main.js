@@ -247,11 +247,29 @@ function initSmoothScroll() {
 
 function initProductCards() {
   document.querySelectorAll('.collection-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.collection-card-add-cart')) return;
       const name = card.querySelector('h3')?.textContent || '';
       if (name) {
         window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
       }
+    });
+  });
+
+  document.querySelectorAll('.collection-card-add-cart').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const name = btn.dataset.name;
+      const price = parseInt(btn.dataset.price);
+      const img = btn.dataset.img;
+      const product = {
+        name: name,
+        finalPrice: price,
+        finalPriceFormatted: '$' + price.toLocaleString('es-CO'),
+        images: [img]
+      };
+      Cart.addItem(product, 'M', 1);
+      showToast('Añadido al carrito', `${name} (Talla: M, Cant: 1)`, 'success');
     });
   });
 }
@@ -467,7 +485,7 @@ async function initProductPage() {
             </div>
           </div>
         </div>
-        <button class="p-buy-btn" id="btnComprar"><i class="bi bi-bag-check"></i> Comprar Ahora</button>
+        <button class="p-buy-btn" id="btnComprar"><i class="bi bi-bag-check"></i> Añadir al Carrito</button>
         <button class="p-wsp-btn" onclick="window.open('https://wa.me/573245947260?text=Hola%20Valentina,%20quiero%20info%20sobre%20${encodeURIComponent(product.name)}','_blank')"><i class="bi bi-whatsapp"></i> Consultar por WhatsApp</button>
       </div>
     </div>
@@ -855,15 +873,18 @@ function initChatbot() {
 
 async function initNotifications() {
   const notifBell = document.getElementById('notifBell');
+  const notifBellDesktop = document.getElementById('notifBellDesktop');
   const notifBadge = document.getElementById('notifBadge');
+  const notifBadgeDesktop = document.getElementById('notifBadgeDesktop');
   const mobileNotifBell = document.getElementById('mobileNotifBell');
   const mobileNotifBadge = document.getElementById('mobileNotifBadge');
-  if (!notifBell && !mobileNotifBell) return;
+  if (!notifBell && !mobileNotifBell && !notifBellDesktop) return;
 
   async function updateBadges() {
     const user = Auth.getCurrentUser();
     if (!user) {
       if (notifBadge) notifBadge.style.display = 'none';
+      if (notifBadgeDesktop) notifBadgeDesktop.style.display = 'none';
       if (mobileNotifBadge) mobileNotifBadge.style.display = 'none';
       return;
     }
@@ -872,6 +893,10 @@ async function initNotifications() {
     if (notifBadge) {
       notifBadge.textContent = displayCount;
       notifBadge.style.display = count > 0 ? 'flex' : 'none';
+    }
+    if (notifBadgeDesktop) {
+      notifBadgeDesktop.textContent = displayCount;
+      notifBadgeDesktop.style.display = count > 0 ? 'flex' : 'none';
     }
     if (mobileNotifBadge) {
       mobileNotifBadge.textContent = displayCount;
@@ -901,6 +926,7 @@ async function initNotifications() {
 
   if (notifBell) notifBell.addEventListener('click', handleNotifClick);
   if (mobileNotifBell) mobileNotifBell.addEventListener('click', handleNotifClick);
+  if (notifBellDesktop) notifBellDesktop.addEventListener('click', handleNotifClick);
 }
 
 async function showNotificationsDropdown(user) {
@@ -958,7 +984,7 @@ async function showNotificationsDropdown(user) {
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#notifBell') && !e.target.closest('#notifDropdown') && !e.target.closest('#mobileNotifBell')) {
+    if (!e.target.closest('#notifBell') && !e.target.closest('#notifDropdown') && !e.target.closest('#mobileNotifBell') && !e.target.closest('#notifBellDesktop')) {
       dropdown.classList.remove('active');
       setTimeout(() => { dropdown.remove(); notifPanelOpen = false; }, 300);
     }
@@ -1060,8 +1086,9 @@ let notifPanelOpen = false;
 
 function initCart() {
   const cartBell = document.getElementById('cartBell');
+  const cartBellDesktop = document.getElementById('cartBellDesktop');
   const mobileCartBell = document.getElementById('mobileCartBell');
-  if (!cartBell && !mobileCartBell) return;
+  if (!cartBell && !cartBellDesktop && !mobileCartBell) return;
 
   updateCartBadge();
 
@@ -1069,6 +1096,13 @@ function initCart() {
 
   if (cartBell) {
     cartBell.addEventListener('click', () => {
+      if (notifPanelOpen) return;
+      toggleCartPanel();
+    });
+  }
+
+  if (cartBellDesktop) {
+    cartBellDesktop.addEventListener('click', () => {
       if (notifPanelOpen) return;
       toggleCartPanel();
     });
@@ -1085,11 +1119,16 @@ function initCart() {
 
 function updateCartBadge() {
   const badge = document.getElementById('cartBadge');
+  const badgeDesktop = document.getElementById('cartBadgeDesktop');
   const mobileBadge = document.getElementById('mobileCartBadge');
   const count = Cart.getCount();
   if (badge) {
     badge.textContent = count > 9 ? '9+' : count;
     badge.style.display = count > 0 ? '' : 'none';
+  }
+  if (badgeDesktop) {
+    badgeDesktop.textContent = count > 9 ? '9+' : count;
+    badgeDesktop.style.display = count > 0 ? '' : 'none';
   }
   if (mobileBadge) {
     mobileBadge.textContent = count > 9 ? '9+' : count;
@@ -1205,7 +1244,7 @@ function openCartPanel() {
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#cartBell') && !e.target.closest('#cartDropdown') && !e.target.closest('#mobileCartBell')) {
+    if (!e.target.closest('#cartBell') && !e.target.closest('#cartDropdown') && !e.target.closest('#mobileCartBell') && !e.target.closest('#cartBellDesktop')) {
       closeCartPanel();
     }
   }, { once: true });
@@ -1293,6 +1332,15 @@ function openCartCheckout() {
             </div>
           </div>
 
+          <div class="form-field">
+            <label>Cupón de Descuento (opcional)</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="payCoupon" placeholder="Ingresa tu código" style="flex:1;text-transform:uppercase;">
+              <button type="button" id="applyCouponBtn" style="padding:10px 16px;background:var(--burgundy);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;white-space:nowrap;">Aplicar</button>
+            </div>
+            <div id="couponMessage" style="font-size:0.75rem;margin-top:6px;display:none;"></div>
+          </div>
+
           <button type="submit" class="modal-submit"><i class="bi bi-lock-fill"></i> Pagar y Confirmar Pedido</button>
         </form>
 
@@ -1314,6 +1362,31 @@ function openCartCheckout() {
 
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
   overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+
+  // Coupon logic
+  let appliedCoupon = null;
+  let discountAmount = 0;
+
+  overlay.querySelector('#applyCouponBtn')?.addEventListener('click', async () => {
+    const code = overlay.querySelector('#payCoupon')?.value.trim().toUpperCase();
+    const msg = overlay.querySelector('#couponMessage');
+    if (!code) return;
+
+    const validCoupons = { 'MINOVIA15': 15, 'MINOVIA20': 20 };
+    if (validCoupons[code]) {
+      appliedCoupon = { code, discount: validCoupons[code] };
+      discountAmount = Math.round(total * (validCoupons[code] / 100));
+      const newTotal = total - discountAmount;
+      msg.style.display = 'block';
+      msg.style.color = '#22c55e';
+      msg.textContent = `¡${validCoupons[code]}% aplicado! Ahorras $${discountAmount.toLocaleString('es-CO')}`;
+      overlay.querySelector('.payment-summary div:last-child span:last-child').textContent = `$${newTotal.toLocaleString('es-CO')}`;
+    } else {
+      msg.style.display = 'block';
+      msg.style.color = '#ef4444';
+      msg.textContent = 'Código inválido';
+    }
+  });
 
   overlay.querySelectorAll('#payMethods .payment-method').forEach(method => {
     method.addEventListener('click', () => {
@@ -1337,6 +1410,7 @@ function openCartCheckout() {
     }));
 
     const currentUser = Auth.getCurrentUser();
+    const finalTotal = appliedCoupon ? total - discountAmount : total;
     const orderData = {
       id: orderId,
       userId: currentUser ? currentUser.id : null,
@@ -1345,16 +1419,21 @@ function openCartCheckout() {
       phone: (overlay.querySelector('#payPhoneCode')?.value || '+57') + ' ' + (overlay.querySelector('#payPhone')?.value || ''),
       doc: overlay.querySelector('#payDoc')?.value || '',
       products: products,
-      total: total,
+      total: finalTotal,
       status: 'pendiente',
       payment,
       address: overlay.querySelector('#payAddress').value,
-      notes: 'Pedido desde carrito',
+      notes: appliedCoupon ? `Pedido desde carrito · Cupón: ${appliedCoupon.code} (-${appliedCoupon.discount}%)` : 'Pedido desde carrito',
       tracking: '',
       carrier: ''
     };
 
     await DataStore.createOrder(orderData);
+
+    // Mark coupon as used in Supabase
+    if (currentUser && appliedCoupon) {
+      await DataStore.markCouponUsed(currentUser.id, orderId);
+    }
 
     if (currentUser) {
       await DataStore.createNotification({

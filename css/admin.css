@@ -262,28 +262,29 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #f0ebe3;
+  border: 1px solid #e0d5c5;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--admin-text-muted);
+  color: #632432;
   transition: all 0.2s ease;
   flex-shrink: 0;
   z-index: 10;
 }
 
 .admin-sidebar-close:hover {
-  background: rgba(255,255,255,0.15);
-  color: var(--admin-text);
+  background: #632432;
+  color: #ffffff;
+  border-color: #632432;
 }
 
 .admin-sidebar-close svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 
@@ -1244,6 +1245,12 @@ body {
   }
   .admin-sidebar-close {
     display: flex !important;
+    width: 36px;
+    height: 36px;
+  }
+  .admin-sidebar-close svg {
+    width: 18px;
+    height: 18px;
   }
   .admin-sidebar-header {
     padding-right: 48px;

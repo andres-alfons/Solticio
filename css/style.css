@@ -518,7 +518,39 @@ img {
 }
 
 .collection-card-body {
-  padding: 1.5rem;
+  padding: 1.2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.collection-card-add-cart {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 36, 50, 0.4);
+  margin-top: 0.8rem;
+  flex-shrink: 0;
+}
+
+.collection-card-add-cart:hover {
+  background: var(--gold);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+.collection-card-add-cart svg {
+  width: 20px;
+  height: 20px;
 }
 
 .collection-card-body h3 {
@@ -537,6 +569,7 @@ img {
 .collection-card-body p {
   font-size: 0.85rem;
   color: var(--text-light);
+  margin-bottom: 0.5rem;
 }
 
 .collection-card-price {
@@ -547,36 +580,17 @@ img {
   flex-wrap: wrap;
 }
 
-.collection-card-body h3 {
-  font-size: 1.4rem;
-  margin-bottom: 0.3rem;
-}
-
-.collection-card-body .price {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--gold);
-  margin-bottom: 0.5rem;
-}
-
-.collection-card-body .price .collection-card-price-original {
+.collection-card-price-original {
   font-size: 0.85rem;
   font-weight: 400;
   color: var(--text-light);
   text-decoration: line-through;
 }
 
-.collection-card-body .price .collection-card-price-final {
+.collection-card-price-final {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #dc2626;
-}
-
-.collection-card-body p {
-  font-size: 0.85rem;
-  color: var(--text-light);
-  flex: 1;
+  color: var(--gold);
 }
 
 /* ======================== SEARCH ======================== */
@@ -1440,11 +1454,13 @@ img {
     width: 100%;
   }
 
-  .mobile-notif-bell i {
+  .mobile-notif-bell i,
+  .mobile-notif-bell svg {
     font-size: 1rem;
     color: var(--burgundy);
     width: 18px;
     text-align: center;
+    flex-shrink: 0;
   }
 
   .mobile-notif-badge {
@@ -1607,6 +1623,31 @@ img {
   gap: 0.8rem;
   position: relative;
   min-height: 32px;
+}
+
+.nav-actions {
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+@media (max-width: 1100px) {
+  .nav-login {
+    display: none;
+  }
+  .nav-actions {
+    display: flex;
+  }
+}
+
+.nav-actions .cart-bell,
+.nav-actions .notif-bell {
+  color: var(--banana);
+}
+
+.navbar.scrolled .nav-actions .cart-bell,
+.navbar.scrolled .nav-actions .notif-bell {
+  color: var(--burgundy);
 }
 
 .nav-login-btn {

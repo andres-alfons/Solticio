@@ -78,10 +78,10 @@
           <p>Bienvenida a tu espacio personal</p>
         </div>
 
-        <div class="account-promo-card">
+        <div class="account-promo-card" id="promoCard" style="display:none;">
           <div class="account-promo-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:inline;vertical-align:middle;margin-right:6px;"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 010-5 2.5 2.5 0 015 0"/><path d="M16.5 8a2.5 2.5 0 010-5 2.5 2.5 0 015 0"/></svg>Tu descuento de bienvenida</div>
-          <div class="account-promo-code" onclick="navigator.clipboard.writeText('MINOVIA15');this.textContent='¡Copiado!';">MINOVIA15</div>
-          <p class="account-promo-text">15% OFF en tu primera compra · Válido hasta el 20 de mayo</p>
+          <div class="account-promo-code" id="promoCode">MINOVIA15</div>
+          <p class="account-promo-text" id="promoText">15% OFF en tu primera compra · Haz clic para copiar</p>
         </div>
 
         <div class="account-stats-grid" id="statsGrid"></div>
@@ -141,6 +141,26 @@
       document.getElementById('userEmail').textContent = user.email;
       document.getElementById('userAvatar').textContent = user.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
       document.getElementById('welcomeText').textContent = `Hola, ${user.name.split(' ')[0]}`;
+
+      // Check for unused coupon
+      const coupon = await DataStore.getUserUnusedCoupon(user.id);
+      if (coupon) {
+        const promoCard = document.getElementById('promoCard');
+        const promoCode = document.getElementById('promoCode');
+        const promoText = document.getElementById('promoText');
+        promoCard.style.display = '';
+        promoCode.textContent = coupon.coupon_code;
+        promoText.textContent = `${coupon.discount_percentage}% OFF en tu primera compra · Haz clic para copiar`;
+        promoCode.onclick = () => {
+          navigator.clipboard.writeText(coupon.coupon_code);
+          promoCode.textContent = '¡Copiado!';
+          promoText.textContent = 'Código copiado al portapapeles';
+          setTimeout(() => {
+            promoCode.textContent = coupon.coupon_code;
+            promoText.textContent = `${coupon.discount_percentage}% OFF en tu primera compra · Haz clic para copiar`;
+          }, 2000);
+        };
+      }
 
       const [orders, appointments] = await Promise.all([
         DataStore.getOrders({ userId: user.id }),

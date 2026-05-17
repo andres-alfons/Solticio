@@ -318,6 +318,33 @@ const DataStore = (function() {
     return { totalRevenue, totalOrders: (orders.data || []).length, pendingOrders, totalProducts: (products.data || []).length, lowStock, activeClients, totalAppointments: (appointments.data || []).length };
   }
 
+  async function getUserUnusedCoupon(userId) {
+    if (!supabase) return null;
+    try {
+      const { data, error } = await supabase.rpc('get_user_unused_coupon', { p_user_id: userId });
+      if (error || !data || data.length === 0) return null;
+      return data[0];
+    } catch (e) {
+      console.warn('Could not get user coupon:', e.message);
+      return null;
+    }
+  }
+
+  async function markCouponUsed(userId, orderId) {
+    if (!supabase) return false;
+    try {
+      const { data, error } = await supabase.rpc('mark_coupon_used', { p_user_id: userId, p_order_id: orderId });
+      if (error) {
+        console.warn('Could not mark coupon used:', error.message);
+        return false;
+      }
+      return data;
+    } catch (e) {
+      console.warn('Could not mark coupon used:', e.message);
+      return false;
+    }
+  }
+
   // ============================================
   // PUBLIC API
   // ============================================
@@ -330,6 +357,8 @@ const DataStore = (function() {
     getNotifications, createNotification, markNotificationRead, markAllNotificationsRead, getUnreadCount,
     getProfile, getAllProfiles, updateProfile,
     getSettings, updateSetting,
-    getStats
+    getStats,
+    getUserUnusedCoupon,
+    markCouponUsed
   };
 })();
