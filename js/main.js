@@ -219,12 +219,36 @@ async function initProductPage() {
 
   let product = null;
   try {
+    const supabase = getSupabase();
     const supabaseProducts = await DataStore.getProducts({ search: productName });
     if (supabaseProducts.length > 0) {
       const dbProduct = supabaseProducts.find(p => p.name.toLowerCase() === productName?.toLowerCase()) || supabaseProducts[0];
       const rawPrice = Number(dbProduct.price);
       const discount = Number(dbProduct.discount_percentage || dbProduct.discount || 0);
       const finalPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
+
+      let images = [];
+      if (dbProduct.images && dbProduct.images.length > 0) {
+        images = dbProduct.images;
+      } else if (dbProduct.image_url) {
+        images = [dbProduct.image_url];
+      }
+
+      if (dbProduct.id && supabase) {
+        try {
+          const { data: productImages } = await supabase
+            .from('product_images')
+            .select('image_url')
+            .eq('product_id', dbProduct.id)
+            .order('sort_order', { ascending: true });
+          if (productImages && productImages.length > 0) {
+            images = productImages.map(img => img.image_url);
+          }
+        } catch (e) {
+          console.warn('Could not load product images:', e.message);
+        }
+      }
+
       product = {
         id: dbProduct.id,
         name: dbProduct.name,
@@ -237,7 +261,7 @@ async function initProductPage() {
         tagCategory: dbProduct.category,
         desc: dbProduct.description || '',
         detail: dbProduct.description_long || '',
-        images: dbProduct.images && dbProduct.images.length > 0 ? dbProduct.images : [dbProduct.image_url],
+        images: images.length > 0 ? images : ['img/WhatsApp%20Image%202026-05-13%20at%2011.13.18%20PM%20(1).jpeg'],
         discount_percentage: discount
       };
     }
@@ -259,7 +283,7 @@ async function initProductPage() {
       tagCategory: local.tagCategory,
       desc: local.desc,
       detail: local.detail,
-      images: local.images,
+      images: local.images.length > 0 ? local.images : ['img/WhatsApp%20Image%202026-05-13%20at%2011.13.18%20PM%20(1).jpeg'],
       discount_percentage: discount
     };
   }
@@ -339,6 +363,11 @@ async function initProductPage() {
   document.getElementById('qtyPlus').addEventListener('click', () => { if (qty < 10) { qty++; document.getElementById('pQty').value = qty; } });
 
   document.getElementById('btnComprar').addEventListener('click', () => {
+    if (!Auth.isLoggedIn()) {
+      showToast('Iniciar sesión requerido', 'Debes iniciar sesión para realizar una compra', 'warning');
+      setTimeout(() => { window.location.href = 'auth/login.html'; }, 1500);
+      return;
+    }
     openPaymentModal(product);
   });
 }
@@ -365,7 +394,7 @@ function openPaymentModal(product) {
           </div>
         </div>
 
-        <form id="paymentForm" style="display:flex;flex-direction:column;gap:0.9rem;">
+        <form id="paymentForm" style="display:flex;flex-direction:column;gap:1.1rem;">
           <div class="modal-form-row">
             <div><label>Nombre Completo</label><input type="text" id="payName" placeholder="Tu nombre" required></div>
             <div><label>Correo</label><input type="email" id="payEmail" placeholder="tucorreo@email.com" required></div>
@@ -393,13 +422,15 @@ function openPaymentModal(product) {
             </div>
             <div><label>Documento</label><input type="text" id="payDoc" placeholder="CC / NIT" required></div>
           </div>
-          <div><label>Dirección de Envío</label><input type="text" id="payAddress" placeholder="Dirección completa" required></div>
+          <div class="form-field"><label>Dirección de Envío</label><input type="text" id="payAddress" placeholder="Dirección completa" required></div>
 
-          <label>Método de Pago</label>
-          <div class="payment-methods" id="payMethods">
-            <div class="payment-method selected" data-method="transferencia"><i class="bi bi-bank"></i> Transferencia</div>
-            <div class="payment-method" data-method="nequi"><i class="bi bi-phone"></i> Nequi</div>
-            <div class="payment-method" data-method="efectivo"><i class="bi bi-cash"></i> Efectivo</div>
+          <div class="form-field">
+            <label>Método de Pago</label>
+            <div class="payment-methods" id="payMethods">
+              <div class="payment-method selected" data-method="transferencia"><i class="bi bi-bank"></i> Transferencia</div>
+              <div class="payment-method" data-method="nequi"><i class="bi bi-phone"></i> Nequi</div>
+              <div class="payment-method" data-method="efectivo"><i class="bi bi-cash"></i> Efectivo</div>
+            </div>
           </div>
 
           <button type="submit" class="modal-submit"><i class="bi bi-lock-fill"></i> Pagar y Confirmar Pedido</button>
@@ -518,12 +549,18 @@ function updateAuthUI() {
 
   function renderNav(user) {
     if (!user) {
-      if (loginBtn) loginBtn.style.display = '';
+      if (loginBtn) {
+        loginBtn.classList.remove('hidden');
+        loginBtn.style.display = '';
+      }
       userDisplay.classList.remove('active');
       return;
     }
 
-    if (loginBtn) loginBtn.style.display = 'none';
+    if (loginBtn) {
+      loginBtn.classList.add('hidden');
+      setTimeout(() => { if (loginBtn.classList.contains('hidden')) loginBtn.style.display = 'none'; }, 200);
+    }
     userDisplay.classList.add('active');
     const firstName = user.name.split(' ')[0];
     userDisplay.querySelector('.login-name').textContent = firstName;
