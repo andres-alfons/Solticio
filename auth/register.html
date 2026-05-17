@@ -187,9 +187,7 @@
           successEl.textContent = 'Cuenta creada exitosamente. Redirigiendo...';
           successEl.classList.add('show');
           setTimeout(() => {
-            const params = new URLSearchParams(window.location.search);
-            const redirect = params.get('redirect');
-            window.location.href = redirect ? decodeURIComponent(redirect) : '../account/index.html';
+            window.location.href = '../index.html';
           }, 1500);
         }
       } else {
@@ -202,7 +200,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       if (Auth.isLoggedIn()) {
-        window.location.href = '../account/index.html';
+        window.location.href = '../index.html';
       }
     });
   </script>

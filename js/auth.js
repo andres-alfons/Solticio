@@ -137,6 +137,11 @@ const Auth = (function() {
         if (error) throw error;
 
         if (data.user) {
+          // Si el usuario ya tiene identidades vacías, significa que el correo ya estaba registrado
+          if (data.user.identities && data.user.identities.length === 0) {
+            return { success: false, error: 'Este correo ya está registrado. Intenta iniciar sesión.' };
+          }
+
           // El trigger handle_new_user ya crea el perfil automáticamente.
           // Solo intentamos actualizar el teléfono si el usuario lo proporcionó.
           if (phone) {
@@ -162,7 +167,10 @@ const Auth = (function() {
                 read: false
               });
           } catch (notifErr) {
-            console.warn('No se pudo crear la notificación de bienvenida:', notifErr.message);
+            // Si hay conflicto (409), probablemente la notificación ya existe
+            if (!notifErr.message.includes('duplicate') && !notifErr.message.includes('409') && notifErr.status !== 409) {
+              console.warn('No se pudo crear la notificación de bienvenida:', notifErr.message);
+            }
           }
 
           if (data.session) {
@@ -188,7 +196,7 @@ const Auth = (function() {
           message = 'La contraseña debe tener al menos 6 caracteres';
         } else if (errMsg.includes('Invalid email')) {
           message = 'El formato del correo no es válido';
-        } else if (errMsg.code === 'network_error' || errMsg.includes('network')) {
+        } else if (err.code === 'network_error' || errMsg.includes('network')) {
           message = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
         } else {
           console.error('Error en signUp:', err);

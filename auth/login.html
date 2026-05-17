@@ -124,9 +124,7 @@
 
       const result = await Auth.signInWithEmail(email, password);
       if (result.success) {
-        const params = new URLSearchParams(window.location.search);
-        const redirect = params.get('redirect');
-        window.location.href = redirect ? decodeURIComponent(redirect) : '../account/index.html';
+        window.location.href = '../index.html';
       } else {
         errorEl.textContent = result.error;
         errorEl.classList.add('show');
@@ -138,7 +136,7 @@
     // Redirect if already logged in
     window.addEventListener('DOMContentLoaded', () => {
       if (Auth.isLoggedIn()) {
-        window.location.href = '../account/index.html';
+        window.location.href = '../index.html';
       }
     });
   </script>
