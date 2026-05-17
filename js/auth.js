@@ -176,10 +176,22 @@ const Auth = (function() {
         return { success: false, error: 'Error al crear cuenta' };
       } catch (err) {
         let message = 'Error al crear cuenta';
-        if (err.message.includes('User already registered')) {
-          message = 'Este email ya está registrado';
-        } else if (err.message.includes('Password should be')) {
+        const errMsg = err.message || '';
+        if (errMsg.includes('User already registered') ||
+            errMsg.includes('email address is already registered') ||
+            errMsg.includes('already been registered') ||
+            errMsg.includes('duplicate key') ||
+            errMsg.includes('duplicate value') ||
+            errMsg.includes('already exists')) {
+          message = 'Este correo ya está registrado. Intenta iniciar sesión.';
+        } else if (errMsg.includes('Password should be') || errMsg.includes('password')) {
           message = 'La contraseña debe tener al menos 6 caracteres';
+        } else if (errMsg.includes('Invalid email')) {
+          message = 'El formato del correo no es válido';
+        } else if (errMsg.code === 'network_error' || errMsg.includes('network')) {
+          message = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+        } else {
+          console.error('Error en signUp:', err);
         }
         return { success: false, error: message };
       }
