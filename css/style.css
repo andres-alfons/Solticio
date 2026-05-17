@@ -1523,6 +1523,8 @@ img {
   .p-price { font-size: 1.3rem; }
   .p-form { padding: 1rem; }
   .p-form-row { grid-template-columns: 1fr; }
+  .p-buy-row { flex-direction: column; }
+  .p-buy-now, .p-buy-cart { flex: 0 0 auto; width: 100%; }
 
   .modal { max-width: 95%; margin: 1rem; }
   .payment-container { padding: 1.5rem 1.2rem; }
@@ -2553,6 +2555,28 @@ img {
   outline: none;
 }
 
+.p-buy-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.p-buy-now {
+  flex: 0 0 70%;
+}
+
+.p-buy-cart {
+  flex: 0 0 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.p-buy-cart i {
+  font-size: 1.1rem;
+  margin-right: 0;
+}
+
 .p-buy-btn {
   background: var(--burgundy);
   color: var(--white);
@@ -2577,6 +2601,10 @@ img {
 
 .p-buy-btn i {
   margin-right: 0.3rem;
+}
+
+.p-buy-cart:hover {
+  background: var(--gold);
 }
 
 .p-wsp-btn {

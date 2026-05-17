@@ -485,7 +485,10 @@ async function initProductPage() {
             </div>
           </div>
         </div>
-        <button class="p-buy-btn" id="btnComprar"><i class="bi bi-bag-check"></i> Añadir al Carrito</button>
+        <div class="p-buy-row">
+          <button class="p-buy-btn p-buy-now" id="btnComprar"><i class="bi bi-bag-check"></i> Comprar Ahora</button>
+          <button class="p-buy-btn p-buy-cart" id="btnAddCart"><i class="bi bi-cart-plus"></i></button>
+        </div>
         <button class="p-wsp-btn" onclick="window.open('https://wa.me/573245947260?text=Hola%20Valentina,%20quiero%20info%20sobre%20${encodeURIComponent(product.name)}','_blank')"><i class="bi bi-whatsapp"></i> Consultar por WhatsApp</button>
       </div>
     </div>
@@ -506,6 +509,15 @@ async function initProductPage() {
   document.getElementById('qtyPlus').addEventListener('click', () => { if (qty < 10) { qty++; document.getElementById('pQty').value = qty; } });
 
   document.getElementById('btnComprar').addEventListener('click', () => {
+    if (!Auth.isLoggedIn()) {
+      showToast('Iniciar sesión requerido', 'Debes iniciar sesión para realizar una compra', 'warning');
+      setTimeout(() => { window.location.href = 'auth/login.html'; }, 1500);
+      return;
+    }
+    openPaymentModal(product);
+  });
+
+  document.getElementById('btnAddCart').addEventListener('click', () => {
     const size = document.getElementById('pSize')?.value || 'M';
     Cart.addItem(product, size, qty);
     showToast('Añadido al carrito', `${product.name} (Talla: ${size}, Cant: ${qty})`, 'success');
@@ -1134,6 +1146,115 @@ function updateCartBadge() {
     mobileBadge.textContent = count > 9 ? '9+' : count;
     mobileBadge.style.display = count > 0 ? '' : 'none';
   }
+
+  const dropdown = document.getElementById('cartDropdown');
+  if (dropdown) {
+    refreshCartPanel();
+  }
+}
+
+function refreshCartPanel() {
+  const dropdown = document.getElementById('cartDropdown');
+  if (!dropdown) return;
+
+  const items = Cart.getItems();
+  const total = Cart.getTotal();
+
+  const header = dropdown.querySelector('.cart-header h3');
+  if (header) header.textContent = `Mi Carrito (${Cart.getCount()})`;
+
+  const clearBtn = dropdown.querySelector('#clearCart');
+  const headerEl = dropdown.querySelector('.cart-header');
+  if (items.length > 0 && !clearBtn && headerEl) {
+    const btn = document.createElement('button');
+    btn.id = 'clearCart';
+    btn.innerHTML = '<i class="bi bi-trash"></i> Vaciar';
+    headerEl.appendChild(btn);
+    btn.addEventListener('click', () => Cart.clear());
+  } else if (items.length === 0 && clearBtn) {
+    clearBtn.remove();
+  }
+
+  const list = dropdown.querySelector('.cart-list');
+  if (list) {
+    if (items.length === 0) {
+      list.innerHTML = '<p class="cart-empty">Tu carrito está vacío</p>';
+    } else {
+      list.innerHTML = items.map(item => `
+        <div class="cart-item" data-product="${item.productId}" data-size="${item.size}">
+          <img class="cart-item-img" src="${item.image}" alt="${item.name}" onerror="this.style.background='linear-gradient(135deg,#632432,#D4AF37)';this.src='';">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-details">Talla: ${item.size} · ${item.priceFormatted}</div>
+            <div class="cart-item-actions">
+              <button class="cart-qty-btn cart-minus" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-dash"></i></button>
+              <span class="cart-qty">${item.qty}</span>
+              <button class="cart-qty-btn cart-plus" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-plus"></i></button>
+              <span class="cart-item-price">$${(item.price * item.qty).toLocaleString('es-CO')}</span>
+              <button class="cart-item-remove" data-id="${item.productId}" data-size="${item.size}"><i class="bi bi-x"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.cart-minus').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const size = btn.dataset.size;
+          const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+          if (item) Cart.updateQty(id, size, item.qty - 1);
+        });
+      });
+
+      list.querySelectorAll('.cart-plus').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const size = btn.dataset.size;
+          const item = Cart.getItems().find(i => i.productId === id && i.size === size);
+          if (item) Cart.updateQty(id, size, Math.min(item.qty + 1, 10));
+        });
+      });
+
+      list.querySelectorAll('.cart-item-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Cart.removeItem(btn.dataset.id, btn.dataset.size);
+        });
+      });
+
+      list.querySelectorAll('.cart-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const name = item.querySelector('.cart-item-name')?.textContent;
+          if (name) window.location.href = `producto.html?p=${encodeURIComponent(name)}`;
+        });
+      });
+    }
+  }
+
+  const footer = dropdown.querySelector('.cart-footer');
+  if (items.length > 0 && !footer) {
+    const footerEl = document.createElement('div');
+    footerEl.className = 'cart-footer';
+    footerEl.innerHTML = `
+      <div class="cart-total">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-value">$${total.toLocaleString('es-CO')}</span>
+      </div>
+      <button class="cart-checkout-btn" id="cartCheckoutBtn"><i class="bi bi-lock-fill"></i> Proceder con el Pago</button>
+    `;
+    dropdown.appendChild(footerEl);
+    footerEl.querySelector('#cartCheckoutBtn')?.addEventListener('click', () => {
+      closeCartPanel();
+      setTimeout(() => openCartCheckout(), 350);
+    });
+  } else if (items.length > 0 && footer) {
+    const totalEl = footer.querySelector('.cart-total-value');
+    if (totalEl) totalEl.textContent = `$${total.toLocaleString('es-CO')}`;
+  } else if (items.length === 0 && footer) {
+    footer.remove();
+  }
 }
 
 function toggleCartPanel() {
@@ -1146,9 +1267,14 @@ function toggleCartPanel() {
 }
 
 function openCartPanel() {
-  const existing = document.getElementById('notifDropdown');
+  const existing = document.getElementById('cartDropdown');
   if (existing) {
     existing.remove();
+  }
+
+  const notifExisting = document.getElementById('notifDropdown');
+  if (notifExisting) {
+    notifExisting.remove();
     notifPanelOpen = false;
   }
 
@@ -1203,7 +1329,6 @@ function openCartPanel() {
       const size = btn.dataset.size;
       const item = Cart.getItems().find(i => i.productId === id && i.size === size);
       if (item) Cart.updateQty(id, size, item.qty - 1);
-      openCartPanel();
     });
   });
 
@@ -1213,8 +1338,7 @@ function openCartPanel() {
       const id = btn.dataset.id;
       const size = btn.dataset.size;
       const item = Cart.getItems().find(i => i.productId === id && i.size === size);
-      if (item) Cart.updateQty(id, size, item.qty + 1);
-      openCartPanel();
+      if (item) Cart.updateQty(id, size, Math.min(item.qty + 1, 10));
     });
   });
 
@@ -1222,7 +1346,6 @@ function openCartPanel() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       Cart.removeItem(btn.dataset.id, btn.dataset.size);
-      openCartPanel();
     });
   });
 
@@ -1235,12 +1358,11 @@ function openCartPanel() {
 
   document.getElementById('clearCart')?.addEventListener('click', () => {
     Cart.clear();
-    openCartPanel();
   });
 
   document.getElementById('cartCheckoutBtn')?.addEventListener('click', () => {
     closeCartPanel();
-    openCartCheckout();
+    setTimeout(() => openCartCheckout(), 350);
   });
 
   document.addEventListener('click', (e) => {
@@ -1254,9 +1376,14 @@ function closeCartPanel() {
   const dropdown = document.getElementById('cartDropdown');
   if (dropdown) {
     dropdown.classList.remove('active');
-    setTimeout(() => { dropdown.remove(); cartPanelOpen = false; }, 300);
+    setTimeout(() => {
+      const el = document.getElementById('cartDropdown');
+      if (el) el.remove();
+      cartPanelOpen = false;
+    }, 300);
+  } else {
+    cartPanelOpen = false;
   }
-  cartPanelOpen = false;
 }
 
 function openCartCheckout() {
