@@ -560,6 +560,19 @@ img {
   margin-bottom: 0.5rem;
 }
 
+.collection-card-body .price .collection-card-price-original {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+.collection-card-body .price .collection-card-price-final {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
 .collection-card-body p {
   font-size: 0.85rem;
   color: var(--text-light);

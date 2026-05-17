@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initChatbot();
   initNotifications();
   updateAuthUI();
+  updateProductPrices();
 });
 
 function initNavbar() {
@@ -208,6 +209,85 @@ function initProductCards() {
       }
     });
   });
+}
+
+async function updateProductPrices() {
+  const cards = document.querySelectorAll('.collection-card');
+  if (!cards.length) return;
+
+  try {
+    const supabase = getSupabase();
+    const dbProducts = await DataStore.getProducts();
+    if (!dbProducts || dbProducts.length === 0) return;
+
+    const productMap = {};
+    dbProducts.forEach(p => {
+      productMap[p.name.toLowerCase()] = {
+        price: Number(p.price),
+        discount: Number(p.discount_percentage || p.discount || 0)
+      };
+    });
+
+    cards.forEach(card => {
+      const nameEl = card.querySelector('h3');
+      if (!nameEl) return;
+      const name = nameEl.textContent.trim().toLowerCase();
+      const dbProduct = productMap[name];
+      if (!dbProduct) return;
+
+      const priceContainer = card.querySelector('.collection-card-price');
+      const priceParagraph = card.querySelector('.collection-card-body .price');
+      if (!priceContainer && !priceParagraph) return;
+
+      const rawPrice = dbProduct.price;
+      const discount = dbProduct.discount;
+      const finalPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
+
+      const priceFormatted = '$' + rawPrice.toLocaleString('es-CO');
+      const finalFormatted = '$' + finalPrice.toLocaleString('es-CO');
+
+      if (discount > 0) {
+        let discountBadge = card.querySelector('.collection-card-discount');
+        if (!discountBadge) {
+          const imgContainer = card.querySelector('.collection-card-img');
+          if (imgContainer) {
+            discountBadge = document.createElement('span');
+            discountBadge.className = 'collection-card-discount';
+            imgContainer.appendChild(discountBadge);
+          }
+        }
+        if (discountBadge) {
+          discountBadge.textContent = `-${discount}%`;
+          discountBadge.style.display = '';
+        }
+
+        if (priceContainer) {
+          priceContainer.innerHTML = `
+            <span class="collection-card-price-original">${priceFormatted}</span>
+            <span class="collection-card-price-final">${finalFormatted}</span>
+          `;
+        }
+        if (priceParagraph) {
+          priceParagraph.innerHTML = `
+            <span class="collection-card-price-original" style="font-size:0.85rem;">${priceFormatted}</span>
+            <span class="collection-card-price-final" style="margin-left:0.4rem;">${finalFormatted}</span>
+          `;
+        }
+      } else {
+        const discountBadge = card.querySelector('.collection-card-discount');
+        if (discountBadge) discountBadge.style.display = 'none';
+
+        if (priceContainer) {
+          priceContainer.innerHTML = `<span class="collection-card-price-final" style="color:var(--gold);">${priceFormatted}</span>`;
+        }
+        if (priceParagraph) {
+          priceParagraph.textContent = `Desde ${priceFormatted}`;
+        }
+      }
+    });
+  } catch (e) {
+    console.warn('Could not update product prices from Supabase:', e.message);
+  }
 }
 
 async function initProductPage() {

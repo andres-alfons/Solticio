@@ -137,31 +137,33 @@ const Auth = (function() {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile manually if trigger didn't fire
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              name: name.trim(),
-              phone,
-              role: 'client',
-              avatar: ''
-            });
-
-          if (profileError && !profileError.message.includes('duplicate')) {
-            throw profileError;
+          // El trigger handle_new_user ya crea el perfil automáticamente.
+          // Solo intentamos actualizar el teléfono si el usuario lo proporcionó.
+          if (phone) {
+            try {
+              await supabase
+                .from('profiles')
+                .update({ phone })
+                .eq('id', data.user.id);
+            } catch (profileErr) {
+              console.warn('No se pudo actualizar el teléfono del perfil:', profileErr.message);
+            }
           }
 
-          // Add welcome notification
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: data.user.id,
-              type: 'promotion',
-              title: 'Bienvenida a Valentina Niebles',
-              message: 'Usa el código MINOVIA15 para 15% OFF en tu primera compra',
-              read: false
-            });
+          // Agregar notificación de bienvenida
+          try {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: data.user.id,
+                type: 'promotion',
+                title: 'Bienvenida a Valentina Niebles',
+                message: 'Usa el código MINOVIA15 para 15% OFF en tu primera compra',
+                read: false
+              });
+          } catch (notifErr) {
+            console.warn('No se pudo crear la notificación de bienvenida:', notifErr.message);
+          }
 
           if (data.session) {
             await loadUserProfile(data.user);
