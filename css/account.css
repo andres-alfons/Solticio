@@ -71,27 +71,31 @@ body {
 .account-sidebar-close {
   display: none;
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 28px;
-  height: 28px;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--acc-text-muted);
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .account-sidebar-close:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.15);
   color: var(--acc-text);
 }
 
 .account-sidebar-close svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .account-sidebar-logo {
@@ -713,7 +717,10 @@ body {
      gap: 0.8rem;
    }
    .account-sidebar-close {
-     display: flex;
+     display: flex !important;
+   }
+   .account-sidebar-header {
+     padding-right: 48px;
    }
  }
 

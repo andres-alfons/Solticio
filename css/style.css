@@ -1221,6 +1221,14 @@ img {
   transform: translateX(0);
 }
 
+.nav-close-mobile {
+  display: none;
+}
+
+.mobile-auth-section {
+  display: none;
+}
+
 /* ======================== RESPONSIVE ======================== */
 @media (max-width: 1100px) {
   .nav-links {
@@ -1287,16 +1295,6 @@ img {
   .nav-login {
     display: none;
   }
-}
-
-@media (min-width: 1101px) {
-  .nav-close-mobile {
-    display: none;
-  }
-  .mobile-auth-section {
-    display: none;
-  }
-}
 
   .nav-links .mobile-auth-section {
     margin-top: auto;
